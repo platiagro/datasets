@@ -4,21 +4,14 @@ from minio import Minio
 from minio.error import ResponseError
 
 from datasets.api import app
-from datasets import datasets
+from datasets.datasets import client
 
 
 class TestApi(unittest.TestCase):
 
     def setUp(self):
-        # uses public MinIO server
-        datasets.client = Minio(
-            "play.min.io",
-            access_key="Q3AM3UQ867SPQQA43P2F",
-            secret_key="zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG",
-            secure=True,
-        )
         try:
-            datasets.client.make_bucket(datasets.bucket)
+            client.make_bucket(datasets.bucket)
         except:
             pass
 
