@@ -14,6 +14,7 @@ You may start the server locally or using a docker container, the requirements f
 ### Local
 
 - [Python 3.6](https://www.python.org/downloads/)
+- [MinIO](https://docs.min.io/docs/minio-quickstart-guide.html)
 
 ### Docker
 
@@ -21,19 +22,74 @@ You may start the server locally or using a docker container, the requirements f
 
 ## Quick Start
 
-Make sure you have all requirements installed on your computer. Then, you may start the server using either a [docker container](#run-docker) or in your [local machine](#run-local).
+Make sure you have all requirements installed on your computer. Then, you may start the server using either a [Docker container](#run-using-docker) or in your [local machine](#run-local).
 
-### Run Docker
+### Run using Docker
+
+Export these environment variables:
+
+```bash
+export MINIO_ENDPOINT=minio:9000
+export MINIO_ACCESS_KEY=some-access-key
+export MINIO_SECRET_KEY=some-secret-key
+```
+
+Create a docker network:
+```bash
+docker network create dev
+```
+
+Start MinIO:
+
+```bash
+docker run -d -p 9000:9000 \
+  --name minio \
+  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+  --network dev \
+  minio/minio server /data
+```
+
+Then, build a docker image that launches the API server:
 
 ```bash
 docker build -t platiagro/datasets:0.0.1 .
-docker run -it -p 8080:8080 platiagro/datasets:0.0.1
+```
+
+Finally, start the API server:
+
+```bash
+docker run -it -p 8080:8080 \
+  --name datasets \
+  --env "MINIO_ENDPOINT=$MINIO_ENDPOINT" \
+  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
+  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
+  --network dev \
+  platiagro/datasets:0.0.1
 ```
 
 ### Run Local:
 
+Export these environment variables:
+
+```bash
+export MINIO_ENDPOINT=localhost:9000
+export MINIO_ACCESS_KEY=some-access-key
+export MINIO_SECRET_KEY=some-secret-key
+```
+
+Download MinIO binaries from https://docs.min.io/docs/minio-quickstart-guide.html, and follow the instructions to start the server.
+
+Install Python modules:
+
+
 ```bash
 pip install .
+```
+
+Then, start the API server:
+
+```bash
 python -m datasets.api
 ```
 

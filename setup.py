@@ -22,6 +22,8 @@ setup(
         # WSGI server
         "Flask==1.1.1",
         "Flask-Cors==3.0.8",
+        # Access object storage server
+        "minio==5.0.6",
     ],
     extras_require=extras,
     python_requires=">=3.5.0",
