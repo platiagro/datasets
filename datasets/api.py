@@ -7,6 +7,12 @@ from flask_cors import CORS
 app = Flask(__name__)
 
 
+@app.route("/", methods=["GET"])
+def ping():
+    """Handles GET requests to /."""
+    return "pong"
+
+
 if __name__ == "__main__":
     # Enable CORS
     if "--enable-cors" in sys.argv:
