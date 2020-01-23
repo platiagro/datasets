@@ -9,7 +9,10 @@ install:
 
 # command to run tests
 script:
-  - pytest
+  - pytest --cov=. --cov-report=xml
+
+after_script:
+  - codecov
 
 notifications:
   email: false
