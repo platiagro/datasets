@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 extras = {
-    "testing": ["pytest", "pytest-xdist"]
+    "testing": ["pytest>=4.4.0", "pytest-xdist==1.31.0"]
 }
 
 setup(
