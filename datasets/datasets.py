@@ -9,7 +9,7 @@ client = Minio(
     secure=False,
 )
 
-bucket = "mlpipeline"
+bucket = "anonymous"
 
 
 def list_datasets():
