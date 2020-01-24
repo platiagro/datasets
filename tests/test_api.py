@@ -4,14 +4,15 @@ from minio import Minio
 from minio.error import ResponseError
 
 from datasets.api import app
-from datasets.datasets import client
+from datasets.datasets import bucket, client
 
 
 class TestApi(unittest.TestCase):
 
     def setUp(self):
+        # ensures that the bucket exists
         try:
-            client.make_bucket(datasets.bucket)
+            client.make_bucket(bucket)
         except:
             pass
 
