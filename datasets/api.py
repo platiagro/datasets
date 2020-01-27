@@ -3,7 +3,7 @@ import sys
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 from .datasets import list_datasets, create_dataset
 
@@ -31,6 +31,11 @@ def post_datasets():
 @app.errorhandler(BadRequest)
 def handle_bad_request(e):
     return jsonify({"message": e.description}), 400
+
+
+@app.errorhandler(InternalServerError)
+def handle_internal_server_error(e):
+    return jsonify({"message": e.description}), 500
 
 
 if __name__ == "__main__":
