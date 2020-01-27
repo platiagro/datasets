@@ -17,13 +17,13 @@ def ping():
 
 
 @app.route("/v1/datasets", methods=["GET"])
-def get_datasets():
+def handle_get_datasets():
     """Handles GET requests to /v1/datasets."""
     return jsonify(list_datasets())
 
 
 @app.route("/v1/datasets", methods=["POST"])
-def post_datasets():
+def handle_post_datasets():
     """Handles POST requests to /v1/datasets."""
     return jsonify(create_dataset(request.files))
 
