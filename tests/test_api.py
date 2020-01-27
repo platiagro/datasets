@@ -57,8 +57,22 @@ class TestApi(unittest.TestCase):
     def test_post_datasets(self):
         with app.test_client() as c:
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"5.1,3.5,1.4,0.2,Iris-setosa"), "iris.data"),
+                "file": (BytesIO(b"5.1,3.5,1.4,0.2,Iris-setosa\n" +
+                                 b"4.9,3.0,1.4,0.2,Iris-setosa\n" +
+                                 b"4.7,3.2,1.3,0.2,Iris-setosa\n" +
+                                 b"4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
             })
             result = rv.get_json()
-            expected = {"name": "iris.data"}
-            self.assertDictEqual(result, expected)
+            expected = {
+                "name": "iris.data",
+                "metadata": {
+                    "col0": "numeric",
+                    "col1": "numeric",
+                    "col2": "numeric",
+                    "col3": "numeric",
+                    "col4": "category",
+                },
+            }
+            if "url" in result:
+                del result["url"]
+            self.assertDictEqual(expected, result)
