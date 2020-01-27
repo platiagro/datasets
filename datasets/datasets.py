@@ -3,8 +3,8 @@ from os.path import join
 
 import pandas as pd
 from minio import Minio
-from minio.error import BucketAlreadyOwnedByYou
-from werkzeug.exceptions import BadRequest
+from minio.error import BucketAlreadyOwnedByYou, NoSuchKey
+from werkzeug.exceptions import BadRequest, NotFound
 
 client = Minio(
     getenv("MINIO_ENDPOINT"),
@@ -75,6 +75,40 @@ def create_dataset(files):
         object_name=join("datasets", file.filename),
     )
     return {"name": file.filename, "metadata": metadata, "url": presigned_url}
+
+
+def get_dataset(name):
+    """Lists all datasets from our object storage.
+
+    Args:
+        name: the dataset name to look for in our object storage.
+
+    Returns:
+        The dataset info.
+    """
+    # ensures MinIO bucket exists
+    make_bucket()
+
+    try:
+        stat = client.stat_object(
+            bucket_name=bucket,
+            object_name=join("datasets", name)
+        )
+
+        prefix = "X-Amz-Meta-"
+        metadata = {}
+        for k, v in stat.metadata.items():
+            col = k[len(prefix):].lower()
+            metadata[col] = v
+
+        # generates a presigned URL for HTTP GET operations
+        presigned_url = client.presigned_get_object(
+            bucket_name=bucket,
+            object_name=join("datasets", name),
+        )
+        return {"name": name, "metadata": metadata, "url": presigned_url}
+    except NoSuchKey:
+        raise NotFound("The specified dataset does not exist")
 
 
 def make_bucket():

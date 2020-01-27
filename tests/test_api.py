@@ -76,3 +76,10 @@ class TestApi(unittest.TestCase):
             if "url" in result:
                 del result["url"]
             self.assertDictEqual(expected, result)
+
+    def test_get_dataset(self):
+        with app.test_client() as c:
+            rv = c.get("/v1/datasets/iris.data")
+            result = rv.get_json()
+            expected = {"message": "The specified dataset does not exist"}
+            self.assertDictEqual(expected, result)

@@ -3,9 +3,9 @@ import sys
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
-from .datasets import list_datasets, create_dataset
+from .datasets import list_datasets, create_dataset, get_dataset
 
 app = Flask(__name__)
 
@@ -28,9 +28,16 @@ def handle_post_datasets():
     return jsonify(create_dataset(request.files))
 
 
+@app.route("/v1/datasets/<name>", methods=["GET"])
+def handle_get_dataset(name):
+    """Handles GET requests to /v1/datasets/<name>."""
+    return jsonify(get_dataset(name))
+
+
 @app.errorhandler(BadRequest)
+@app.errorhandler(NotFound)
 def handle_bad_request(e):
-    return jsonify({"message": e.description}), 400
+    return jsonify({"message": e.description}), e.code
 
 
 @app.errorhandler(InternalServerError)
