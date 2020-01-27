@@ -23,6 +23,10 @@ def list_datasets():
         A list of all datasets names.
     """
     datasets = []
+
+    # ensures MinIO bucket exists
+    make_bucket()
+
     objects = client.list_objects_v2(bucket, "datasets/")
     for obj in objects:
         datasets.append(obj.object_name.encode("utf-8"))
