@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
+from .columns import list_columns
 from .datasets import list_datasets, create_dataset, get_dataset
 
 app = Flask(__name__)
@@ -17,7 +18,7 @@ def ping():
 
 
 @app.route("/v1/datasets", methods=["GET"])
-def handle_get_datasets():
+def handle_list_datasets():
     """Handles GET requests to /v1/datasets."""
     return jsonify(list_datasets())
 
@@ -32,6 +33,12 @@ def handle_post_datasets():
 def handle_get_dataset(name):
     """Handles GET requests to /v1/datasets/<name>."""
     return jsonify(get_dataset(name))
+
+
+@app.route("/v1/datasets/<dataset>/columns", methods=["GET"])
+def handle_list_columns(dataset):
+    """Handles GET requests to /v1/datasets/<dataset>/columns."""
+    return jsonify(list_columns(dataset))
 
 
 @app.errorhandler(BadRequest)

@@ -1,5 +1,5 @@
 from dateutil.parser import parse
-from json import dumps
+from json import dumps, loads
 from os import SEEK_SET, SEEK_END, getenv
 from os.path import join
 
@@ -15,7 +15,8 @@ client = Minio(
     secure=False,
 )
 
-bucket = "anonymous"
+BUCKET = "anonymous"
+PREFIX = "datasets"
 
 
 def list_datasets():
@@ -27,11 +28,11 @@ def list_datasets():
     datasets = []
 
     # ensures MinIO bucket exists
-    make_bucket()
+    make_bucket(BUCKET)
 
-    objects = client.list_objects_v2(bucket, "datasets/")
+    objects = client.list_objects_v2(BUCKET, PREFIX + "/")
     for obj in objects:
-        datasets.append(obj.object_name.encode("utf-8"))
+        datasets.append(obj.object_name[len(PREFIX) + 1:])
     return datasets
 
 
@@ -57,33 +58,35 @@ def create_dataset(files):
 
     # will store columns and featuretypes as metadata
     metadata = {
-        "columns": dumps([col for col, _ in dtypes]),
-        "featuretypes": dumps([dtype for _, dtype in dtypes]),
+        "columns": [col for col, _ in dtypes],
+        "featuretypes": [dtype for _, dtype in dtypes],
     }
 
+    metadata
+
     # ensures MinIO bucket exists
-    make_bucket()
+    make_bucket(BUCKET)
 
     # uploads file to MinIO
     # adds the prefix 'datasets/' to the filename
     client.put_object(
-        bucket_name=bucket,
-        object_name=join("datasets", file.filename),
+        bucket_name=BUCKET,
+        object_name=join(PREFIX, file.filename),
         data=file,
         length=file_length,
-        metadata=metadata,
+        metadata=dict((k, dumps(v)) for k, v in metadata.items()),
     )
 
     # generates a presigned URL for HTTP GET operations
     presigned_url = client.presigned_get_object(
-        bucket_name=bucket,
-        object_name=join("datasets", file.filename),
+        bucket_name=BUCKET,
+        object_name=join(PREFIX, file.filename),
     )
     return {"name": file.filename, "metadata": metadata, "url": presigned_url}
 
 
 def get_dataset(name):
-    """Lists all datasets from our object storage.
+    """Details a dataset from our object storage.
 
     Args:
         name: the dataset name to look for in our object storage.
@@ -92,35 +95,40 @@ def get_dataset(name):
         The dataset info.
     """
     # ensures MinIO bucket exists
-    make_bucket()
+    make_bucket(BUCKET)
 
     try:
         stat = client.stat_object(
-            bucket_name=bucket,
-            object_name=join("datasets", name)
+            bucket_name=BUCKET,
+            object_name=join(PREFIX, name)
         )
 
-        prefix = "X-Amz-Meta-"
-        metadata = {}
-        for k, v in stat.metadata.items():
-            if k.startswith(prefix):
-                col = k[len(prefix):].lower()
-                metadata[col] = v
+        columns = loads(stat.metadata["X-Amz-Meta-Columns"])
+        featuretypes = loads(stat.metadata["X-Amz-Meta-Featuretypes"])
+
+        metadata = {
+            "columns": columns,
+            "featuretypes": featuretypes,
+        }
 
         # generates a presigned URL for HTTP GET operations
         presigned_url = client.presigned_get_object(
-            bucket_name=bucket,
-            object_name=join("datasets", name),
+            bucket_name=BUCKET,
+            object_name=join(PREFIX, name),
         )
         return {"name": name, "metadata": metadata, "url": presigned_url}
     except NoSuchKey:
         raise NotFound("The specified dataset does not exist")
 
 
-def make_bucket():
-    """Creates the bucket in MinIO."""
+def make_bucket(name):
+    """Creates the bucket in MinIO. Ignores exception if bucket already exists.
+
+    Args:
+        name: the bucket name
+    """
     try:
-        client.make_bucket(bucket)
+        client.make_bucket(name)
     except BucketAlreadyOwnedByYou:
         pass
 
