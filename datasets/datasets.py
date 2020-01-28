@@ -1,3 +1,4 @@
+from dateutil.parser import parse
 from os import SEEK_SET, SEEK_END, getenv
 from os.path import join
 
@@ -59,15 +60,18 @@ def create_dataset(files):
     # ensures MinIO bucket exists
     make_bucket()
 
-    # uploads file to MinIO
-    # adds the prefix 'datasets/' to the filename
-    client.put_object(
-        bucket_name=bucket,
-        object_name=join("datasets", file.filename),
-        data=file,
-        length=file_length,
-        metadata=metadata,
-    )
+    try:
+        # uploads file to MinIO
+        # adds the prefix 'datasets/' to the filename
+        client.put_object(
+            bucket_name=bucket,
+            object_name=join("datasets", file.filename),
+            data=file,
+            length=file_length,
+            metadata=metadata,
+        )
+    except Exception as e:
+        print(e)
 
     # generates a presigned URL for HTTP GET operations
     presigned_url = client.presigned_get_object(
@@ -144,8 +148,22 @@ def infer_dtypes(file, nrows=5):
     df = pd.read_csv(file, header=header, prefix="col")
     for col in df.columns:
         if df.dtypes[col].kind == "O":
-            dtypes.append((str(col), "category",))
+            if is_datetime(df[col].iloc[:nrows]):
+                dtypes.append((str(col), "datetime",))
+            else:
+                dtypes.append((str(col), "category",))
         else:
             dtypes.append((str(col), "numeric",))
     file.seek(0, SEEK_SET)
     return dtypes
+
+
+def is_datetime(column):
+    """Returns whether a column is a DateTime."""
+    for _, value in column.iteritems():
+        try:
+            parse(value)
+            break
+        except ValueError:
+            return False
+    return True
