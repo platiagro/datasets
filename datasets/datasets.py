@@ -1,4 +1,5 @@
 from dateutil.parser import parse
+from json import dumps
 from os import SEEK_SET, SEEK_END, getenv
 from os.path import join
 
@@ -54,24 +55,24 @@ def create_dataset(files):
 
     dtypes = infer_dtypes(file)
 
-    # will store data types as metadata
-    metadata = dict((col, dtype) for col, dtype in dtypes)
+    # will store columns and featuretypes as metadata
+    metadata = {
+        "columns": dumps([col for col, _ in dtypes]),
+        "featuretypes": dumps([dtype for _, dtype in dtypes]),
+    }
 
     # ensures MinIO bucket exists
     make_bucket()
 
-    try:
-        # uploads file to MinIO
-        # adds the prefix 'datasets/' to the filename
-        client.put_object(
-            bucket_name=bucket,
-            object_name=join("datasets", file.filename),
-            data=file,
-            length=file_length,
-            metadata=metadata,
-        )
-    except Exception as e:
-        print(e)
+    # uploads file to MinIO
+    # adds the prefix 'datasets/' to the filename
+    client.put_object(
+        bucket_name=bucket,
+        object_name=join("datasets", file.filename),
+        data=file,
+        length=file_length,
+        metadata=metadata,
+    )
 
     # generates a presigned URL for HTTP GET operations
     presigned_url = client.presigned_get_object(
@@ -102,8 +103,9 @@ def get_dataset(name):
         prefix = "X-Amz-Meta-"
         metadata = {}
         for k, v in stat.metadata.items():
-            col = k[len(prefix):].lower()
-            metadata[col] = v
+            if k.startswith(prefix):
+                col = k[len(prefix):].lower()
+                metadata[col] = v
 
         # generates a presigned URL for HTTP GET operations
         presigned_url = client.presigned_get_object(
@@ -151,7 +153,7 @@ def infer_dtypes(file, nrows=5):
             if is_datetime(df[col].iloc[:nrows]):
                 dtypes.append((str(col), "datetime",))
             else:
-                dtypes.append((str(col), "category",))
+                dtypes.append((str(col), "categorical",))
         else:
             dtypes.append((str(col), "numeric",))
     file.seek(0, SEEK_SET)
