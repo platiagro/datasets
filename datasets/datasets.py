@@ -2,6 +2,7 @@ from dateutil.parser import parse
 from json import dumps, loads
 from os import SEEK_SET, SEEK_END, getenv
 from os.path import join
+from uuid import uuid4
 
 import pandas as pd
 from minio import Minio
@@ -33,7 +34,13 @@ def list_datasets():
 
     objects = client.list_objects_v2(BUCKET, PREFIX + "/")
     for obj in objects:
-        datasets.append(obj.object_name[len(PREFIX) + 1:])
+        name = obj.object_name[len(PREFIX) + 1:]
+        stat = client.stat_object(
+            bucket_name=BUCKET,
+            object_name=join(PREFIX, name)
+        )
+        filename = stat.metadata["X-Amz-Meta-Filename"]
+        datasets.append({"name": name, "filename": filename})
     return datasets
 
 
@@ -74,31 +81,37 @@ def create_dataset(files):
     else:
         featuretypes = infer_featuretypes(df)
 
+    # generates an uuid for the dataset
+    name = str(uuid4())
+
     # will store columns and featuretypes as metadata
     metadata = {
-        "columns": columns,
-        "featuretypes": featuretypes,
+        "columns": dumps(columns),
+        "featuretypes": dumps(featuretypes),
+        "filename": file.filename,
     }
 
     # ensures MinIO bucket exists
     make_bucket(BUCKET)
 
     # uploads file to MinIO
-    # adds the prefix 'datasets/' to the filename
+    # adds the prefix 'datasets/' to the dataset name
     client.put_object(
         bucket_name=BUCKET,
-        object_name=join(PREFIX, file.filename),
+        object_name=join(PREFIX, name),
         data=file,
         length=file_length,
-        metadata=dict((k, dumps(v)) for k, v in metadata.items()),
+        metadata=metadata,
     )
 
     # generates a presigned URL for HTTP GET operations
     presigned_url = client.presigned_get_object(
         bucket_name=BUCKET,
-        object_name=join(PREFIX, file.filename),
+        object_name=join(PREFIX, name),
     )
-    return {"name": file.filename, "metadata": metadata, "url": presigned_url}
+
+    columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+    return {"name": name, "filename": file.filename, "columns": columns, "url": presigned_url}
 
 
 def get_dataset(name):
@@ -121,18 +134,16 @@ def get_dataset(name):
 
         columns = loads(stat.metadata["X-Amz-Meta-Columns"])
         featuretypes = loads(stat.metadata["X-Amz-Meta-Featuretypes"])
-
-        metadata = {
-            "columns": columns,
-            "featuretypes": featuretypes,
-        }
+        filename = stat.metadata["X-Amz-Meta-Filename"]
 
         # generates a presigned URL for HTTP GET operations
         presigned_url = client.presigned_get_object(
             bucket_name=BUCKET,
             object_name=join(PREFIX, name),
         )
-        return {"name": name, "metadata": metadata, "url": presigned_url}
+
+        columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+        return {"name": name, "filename": filename, "columns": columns, "url": presigned_url}
     except NoSuchKey:
         raise NotFound("The specified dataset does not exist")
 

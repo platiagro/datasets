@@ -53,6 +53,22 @@ class TestApi(unittest.TestCase):
             expected = []
             self.assertListEqual(result, expected)
 
+            rv = c.post("/v1/datasets", data={
+                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
+                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
+                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
+                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+            })
+
+            rv = c.get("/v1/datasets")
+            result = rv.get_json()
+            for r in result:
+                self.assertIn("name", r)
+                del r["name"]
+
+            expected = [{"filename": "iris.data"}]
+            self.assertListEqual(result, expected)
+
     def test_create_dataset(self):
         with app.test_client() as c:
             rv = c.post("/v1/datasets", data={
@@ -63,14 +79,52 @@ class TestApi(unittest.TestCase):
             })
             result = rv.get_json()
             expected = {
-                "name": "iris.data",
-                "metadata": {
-                    "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-                    "featuretypes": ["DateTime", "Numerical", "Numerical", "Numerical", "Numerical", "Categorical"],
-                },
+                "filename": "iris.data",
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
             }
-            if "url" in result:
-                del result["url"]
+            # name and url are machine-generated
+            # we assert they exist, but we don't their values
+            self.assertIn("name", result)
+            del result["name"]
+            self.assertIn("url", result)
+            del result["url"]
+            self.assertDictEqual(expected, result)
+
+            rv = c.post("/v1/datasets", data={
+                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
+                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
+                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
+                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "featuretypes": (BytesIO(b"DateTime\n" +
+                                         b"Numerical\n" +
+                                         b"Numerical\n" +
+                                         b"Numerical\n" +
+                                         b"Numerical\n" +
+                                         b"Categorical"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {
+                "filename": "iris.data",
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+            }
+            self.assertIn("name", result)
+            del result["name"]
+            self.assertIn("url", result)
+            del result["url"]
             self.assertDictEqual(expected, result)
 
     def test_get_dataset(self):
@@ -86,18 +140,27 @@ class TestApi(unittest.TestCase):
                                  b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
                                  b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
             })
+            name = rv.get_json().get("name")
 
-            rv = c.get("/v1/datasets/iris.data")
+            rv = c.get("/v1/datasets/{}".format(name))
             result = rv.get_json()
             expected = {
-                "name": "iris.data",
-                "metadata": {
-                    "columns": ["col0", "col1", "col2", "col3", "col4", "col5"],
-                    "featuretypes": ["DateTime", "Numerical", "Numerical", "Numerical", "Numerical", "Categorical"],
-                },
+                "filename": "iris.data",
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
             }
-            if "url" in result:
-                del result["url"]
+            # name and url are machine-generated
+            # we assert they exist, but we don't their values
+            self.assertIn("name", result)
+            del result["name"]
+            self.assertIn("url", result)
+            del result["url"]
             self.assertDictEqual(expected, result)
 
     def test_list_columns(self):
@@ -107,15 +170,15 @@ class TestApi(unittest.TestCase):
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
 
-            # adds some data
             rv = c.post("/v1/datasets", data={
                 "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
                                  b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
                                  b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
                                  b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
             })
+            name = rv.get_json().get("name")
 
-            rv = c.get("/v1/datasets/iris.data/columns")
+            rv = c.get("/v1/datasets/{}/columns".format(name))
             result = rv.get_json()
             expected = [
                 {"name": "col0", "featuretype": "DateTime"},
@@ -142,22 +205,23 @@ class TestApi(unittest.TestCase):
                                  b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
                                  b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
             })
+            name = rv.get_json().get("name")
 
-            rv = c.patch("/v1/datasets/iris.data/columns/unk", json={
+            rv = c.patch("/v1/datasets/{}/columns/unk".format(name), json={
                 "featuretype": "Numerical"
             })
             result = rv.get_json()
             expected = {"message": "The specified column does not exist"}
             self.assertDictEqual(expected, result)
 
-            rv = c.patch("/v1/datasets/iris.data/columns/col0", json={
+            rv = c.patch("/v1/datasets/{}/columns/col0".format(name), json={
                 "featuretype": "Invalid"
             })
             result = rv.get_json()
             expected = {"message": "featuretype must be one of Numerical, Categorical, DateTime"}
             self.assertDictEqual(expected, result)
 
-            rv = c.patch("/v1/datasets/iris.data/columns/col0", json={
+            rv = c.patch("/v1/datasets/{}/columns/col0".format(name), json={
                 "featuretype": "Numerical"
             })
             result = rv.get_json()
