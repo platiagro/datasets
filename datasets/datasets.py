@@ -58,12 +58,26 @@ def create_dataset(files):
 
     file_length = get_file_length(file)
 
-    dtypes = infer_dtypes(file)
+    # reads csv file into a DataFrame
+    df = read_csv(file)
+    columns = df.columns.values.tolist()
+
+    # checks if the post request has the 'featuretypes' part
+    if "featuretypes" in files:
+        ftype_file = files["featuretypes"]
+        featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
+        valid_types = ["Numerical", "Categorical", "DateTime"]
+        if any(ftype not in valid_types for ftype in featuretypes):
+            raise BadRequest("featuretypes must be one of Numerical, Categorical, DateTime")
+        if len(columns) != len(featuretypes):
+            raise BadRequest("featuretypes must be the same length as columns")
+    else:
+        featuretypes = infer_featuretypes(df)
 
     # will store columns and featuretypes as metadata
     metadata = {
-        "columns": [col for col, _ in dtypes],
-        "featuretypes": [dtype for _, dtype in dtypes],
+        "columns": columns,
+        "featuretypes": featuretypes,
     }
 
     # ensures MinIO bucket exists
@@ -143,31 +157,31 @@ def get_file_length(file):
     return file_length
 
 
-def identify_header(file, nrows=5, th=0.9):
-    """Analyze whether header should be set to 'infer' or None."""
+def read_csv(file, nrows=5, th=0.9):
+    """Read a csv file into a DataFrame. Infers whether a header column exists."""
     df1 = pd.read_csv(file, header="infer", nrows=nrows)
     file.seek(0, SEEK_SET)
     df2 = pd.read_csv(file, header=None, nrows=nrows)
     file.seek(0, SEEK_SET)
     sim = (df1.dtypes.values == df2.dtypes.values).mean()
-    return "infer" if sim < th else None
-
-
-def infer_dtypes(file, nrows=5):
-    """Infer data type from DataFrame columns."""
-    header = identify_header(file, nrows=nrows)
-    dtypes = []
+    header = "infer" if sim < th else None
     df = pd.read_csv(file, header=header, prefix="col")
+    file.seek(0, SEEK_SET)
+    return df
+
+
+def infer_featuretypes(df, nrows=5):
+    """Infer featuretypes from DataFrame columns."""
+    featuretypes = []
     for col in df.columns:
         if df.dtypes[col].kind == "O":
             if is_datetime(df[col].iloc[:nrows]):
-                dtypes.append((str(col), "DateTime",))
+                featuretypes.append("DateTime")
             else:
-                dtypes.append((str(col), "Categorical",))
+                featuretypes.append("Categorical")
         else:
-            dtypes.append((str(col), "Numerical",))
-    file.seek(0, SEEK_SET)
-    return dtypes
+            featuretypes.append("Numerical")
+    return featuretypes
 
 
 def is_datetime(column):
