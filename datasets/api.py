@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
-from .columns import list_columns
+from .columns import list_columns, update_column
 from .datasets import list_datasets, create_dataset, get_dataset
 
 app = Flask(__name__)
@@ -39,6 +39,13 @@ def handle_get_dataset(name):
 def handle_list_columns(dataset):
     """Handles GET requests to /v1/datasets/<dataset>/columns."""
     return jsonify(list_columns(dataset))
+
+
+@app.route("/v1/datasets/<dataset>/columns/<column>", methods=["PATCH"])
+def handle_patch_column(dataset, column):
+    """Handles PATCH requests to /v1/datasets/<dataset>/columns/<column>."""
+    featuretype = request.get_json().get("featuretype")
+    return jsonify(update_column(dataset, column, featuretype))
 
 
 @app.errorhandler(BadRequest)

@@ -12,6 +12,7 @@ client = Minio(
     getenv("MINIO_ENDPOINT"),
     access_key=getenv("MINIO_ACCESS_KEY"),
     secret_key=getenv("MINIO_SECRET_KEY"),
+    region=getenv("MINIO_REGION_NAME", "us-east-1"),
     secure=False,
 )
 
@@ -39,6 +40,9 @@ def list_datasets():
 def create_dataset(files):
     """Creates a new dataset in our object storage.
 
+    Args:
+        files: file objects.
+
     Returns:
         The dataset info.
     """
@@ -61,8 +65,6 @@ def create_dataset(files):
         "columns": [col for col, _ in dtypes],
         "featuretypes": [dtype for _, dtype in dtypes],
     }
-
-    metadata
 
     # ensures MinIO bucket exists
     make_bucket(BUCKET)
@@ -159,11 +161,11 @@ def infer_dtypes(file, nrows=5):
     for col in df.columns:
         if df.dtypes[col].kind == "O":
             if is_datetime(df[col].iloc[:nrows]):
-                dtypes.append((str(col), "datetime",))
+                dtypes.append((str(col), "DateTime",))
             else:
-                dtypes.append((str(col), "categorical",))
+                dtypes.append((str(col), "Categorical",))
         else:
-            dtypes.append((str(col), "numeric",))
+            dtypes.append((str(col), "Numerical",))
     file.seek(0, SEEK_SET)
     return dtypes
 
