@@ -39,6 +39,20 @@ class TestApi(unittest.TestCase):
         except:
             pass
 
+    def mock_file(self):
+        return (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
+                        b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
+                        b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
+                        b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data",)
+
+    def mock_featuretypes(self):
+        return (BytesIO(b"DateTime\n" +
+                        b"Numerical\n" +
+                        b"Numerical\n" +
+                        b"Numerical\n" +
+                        b"Numerical\n" +
+                        b"Categorical"), "featuretypes.txt",)
+
     def test_ping(self):
         with app.test_client() as c:
             rv = c.get("/")
@@ -54,10 +68,7 @@ class TestApi(unittest.TestCase):
             self.assertListEqual(result, expected)
 
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "file": self.mock_file(),
             })
 
             rv = c.get("/v1/datasets")
@@ -71,11 +82,39 @@ class TestApi(unittest.TestCase):
 
     def test_create_dataset(self):
         with app.test_client() as c:
+            rv = c.post("/v1/datasets", data={})
+            result = rv.get_json()
+            expected = {"message": "No file part"}
+            self.assertDictEqual(expected, result)
+
+            rv = c.post("/v1/datasets", data={"file": (BytesIO(), "")})
+            result = rv.get_json()
+            expected = {"message": "No selected file"}
+            self.assertDictEqual(expected, result)
+
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "file": self.mock_file(),
+                "featuretypes": (BytesIO(b"date\n" +
+                                         b"float\n" +
+                                         b"float\n" +
+                                         b"float\n" +
+                                         b"float\n" +
+                                         b"string"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {
+                "message": "featuretypes must be one of Numerical, Categorical, DateTime"}
+
+            rv = c.post("/v1/datasets", data={
+                "file": self.mock_file(),
+                "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {
+                "message": "featuretypes must be the same length as columns"}
+
+            rv = c.post("/v1/datasets", data={
+                "file": self.mock_file(),
             })
             result = rv.get_json()
             expected = {
@@ -98,16 +137,8 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
-                "featuretypes": (BytesIO(b"DateTime\n" +
-                                         b"Numerical\n" +
-                                         b"Numerical\n" +
-                                         b"Numerical\n" +
-                                         b"Numerical\n" +
-                                         b"Categorical"), "featuretypes.txt"),
+                "file": self.mock_file(),
+                "featuretypes": self.mock_featuretypes(),
             })
             result = rv.get_json()
             expected = {
@@ -135,10 +166,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "file": self.mock_file(),
             })
             name = rv.get_json().get("name")
 
@@ -171,10 +199,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "file": self.mock_file(),
             })
             name = rv.get_json().get("name")
 
@@ -200,10 +225,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/v1/datasets", data={
-                "file": (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
-                                 b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
-                                 b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data"),
+                "file": self.mock_file(),
             })
             name = rv.get_json().get("name")
 
@@ -218,7 +240,8 @@ class TestApi(unittest.TestCase):
                 "featuretype": "Invalid"
             })
             result = rv.get_json()
-            expected = {"message": "featuretype must be one of Numerical, Categorical, DateTime"}
+            expected = {
+                "message": "featuretype must be one of Numerical, Categorical, DateTime"}
             self.assertDictEqual(expected, result)
 
             rv = c.patch("/v1/datasets/{}/columns/col0".format(name), json={
