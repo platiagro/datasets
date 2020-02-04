@@ -13,7 +13,6 @@ You may start the server locally or using a docker container, the requirements f
 ### Local
 
 - [Python 3.6](https://www.python.org/downloads/)
-- [MinIO](https://docs.min.io/docs/minio-quickstart-guide.html)
 
 ### Docker
 
@@ -28,25 +27,9 @@ Make sure you have all requirements installed on your computer. Then, you may st
 Export these environment variables:
 
 ```bash
-export MINIO_ENDPOINT=minio:9000
-export MINIO_ACCESS_KEY=some-access-key
-export MINIO_SECRET_KEY=some-secret-key
-```
-
-Create a docker network:
-```bash
-docker network create dev
-```
-
-Start MinIO:
-
-```bash
-docker run -d -p 9000:9000 \
-  --name minio \
-  --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
-  --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-  --network dev \
-  minio/minio server /data
+export MINIO_ENDPOINT=play.min.io
+export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
+export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 ```
 
 Then, build a docker image that launches the API server:
@@ -63,7 +46,6 @@ docker run -it -p 8080:8080 \
   --env "MINIO_ENDPOINT=$MINIO_ENDPOINT" \
   --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
   --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-  --network dev \
   platiagro/datasets:0.0.1
 ```
 
@@ -72,15 +54,19 @@ docker run -it -p 8080:8080 \
 Export these environment variables:
 
 ```bash
-export MINIO_ENDPOINT=localhost:9000
-export MINIO_ACCESS_KEY=some-access-key
-export MINIO_SECRET_KEY=some-secret-key
+export MINIO_ENDPOINT=play.min.io
+export MINIO_ACCESS_KEY=Q3AM3UQ867SPQQA43P2F
+export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 ```
 
-Download MinIO binaries from https://docs.min.io/docs/minio-quickstart-guide.html, and follow the instructions to start the server.
+(Optional) Create a virtualenv:
+
+```bash
+virtualenv -p python3 venv
+. venv/bin/activate
+```
 
 Install Python modules:
-
 
 ```bash
 pip install .
