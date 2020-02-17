@@ -50,13 +50,10 @@ def handle_patch_column(dataset, column):
 
 @app.errorhandler(BadRequest)
 @app.errorhandler(NotFound)
-def handle_bad_request(e):
-    return jsonify({"message": e.description}), e.code
-
-
 @app.errorhandler(InternalServerError)
-def handle_internal_server_error(e):
-    return jsonify({"message": e.description}), 500
+def handle_errors(e):
+    """Handles exceptions raised by the API."""
+    return jsonify({"message": e.description}), e.code
 
 
 if __name__ == "__main__":
