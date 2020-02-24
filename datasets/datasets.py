@@ -1,24 +1,13 @@
-from dateutil.parser import parse
-from json import dumps, loads
-from os import SEEK_SET, SEEK_END, getenv
-from os.path import join
+# -*- coding: utf-8 -*-
+from os import SEEK_SET, SEEK_END
 from uuid import uuid4
 
 import pandas as pd
-from minio import Minio
-from minio.error import BucketAlreadyOwnedByYou, NoSuchKey
+import platiagro
+from platiagro import load_dataset, save_dataset, load_metadata
 from werkzeug.exceptions import BadRequest, NotFound
 
-client = Minio(
-    getenv("MINIO_ENDPOINT"),
-    access_key=getenv("MINIO_ACCESS_KEY"),
-    secret_key=getenv("MINIO_SECRET_KEY"),
-    region=getenv("MINIO_REGION_NAME", "us-east-1"),
-    secure=False,
-)
-
-BUCKET = "anonymous"
-PREFIX = "datasets"
+from .featuretypes import infer_featuretypes, validate_featuretypes
 
 
 def list_datasets():
@@ -27,21 +16,7 @@ def list_datasets():
     Returns:
         A list of all datasets names.
     """
-    datasets = []
-
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET)
-
-    objects = client.list_objects_v2(BUCKET, PREFIX + "/")
-    for obj in objects:
-        name = obj.object_name[len(PREFIX) + 1:]
-        stat = client.stat_object(
-            bucket_name=BUCKET,
-            object_name=join(PREFIX, name)
-        )
-        filename = stat.metadata["X-Amz-Meta-Filename"]
-        datasets.append({"name": name, "filename": filename})
-    return datasets
+    return platiagro.list_datasets()
 
 
 def create_dataset(files):
@@ -73,45 +48,23 @@ def create_dataset(files):
     if "featuretypes" in files:
         ftype_file = files["featuretypes"]
         featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
-        valid_types = ["Numerical", "Categorical", "DateTime"]
-        if any(ftype not in valid_types for ftype in featuretypes):
-            raise BadRequest("featuretypes must be one of Numerical, Categorical, DateTime")
-        if len(columns) != len(featuretypes):
-            raise BadRequest("featuretypes must be the same length as columns")
+        validate_featuretypes(featuretypes)
     else:
         featuretypes = infer_featuretypes(df)
 
     # generates an uuid for the dataset
     name = str(uuid4())
 
-    # will store columns and featuretypes as metadata
     metadata = {
-        "columns": dumps(columns),
-        "featuretypes": dumps(featuretypes),
+        "featuretypes": featuretypes,
         "filename": file.filename,
     }
 
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET)
-
-    # uploads file to MinIO
-    # adds the prefix 'datasets/' to the dataset name
-    client.put_object(
-        bucket_name=BUCKET,
-        object_name=join(PREFIX, name),
-        data=file,
-        length=file_length,
-        metadata=metadata,
-    )
-
-    # generates a presigned URL for HTTP GET operations
-    presigned_url = client.presigned_get_object(
-        bucket_name=BUCKET,
-        object_name=join(PREFIX, name),
-    )
+    ## uses PlatIAgro SDK to save the dataset
+    save_dataset(name, df, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-    return {"name": name, "filename": file.filename, "columns": columns, "url": presigned_url}
+    return {"name": name, "columns": columns, "filename": file.filename}
 
 
 def get_dataset(name):
@@ -123,41 +76,17 @@ def get_dataset(name):
     Returns:
         The dataset info.
     """
-    # ensures MinIO bucket exists
-    make_bucket(BUCKET)
-
     try:
-        stat = client.stat_object(
-            bucket_name=BUCKET,
-            object_name=join(PREFIX, name)
-        )
+        df = load_dataset(name)
+        metadata = load_metadata(name)
 
-        columns = loads(stat.metadata["X-Amz-Meta-Columns"])
-        featuretypes = loads(stat.metadata["X-Amz-Meta-Featuretypes"])
-        filename = stat.metadata["X-Amz-Meta-Filename"]
-
-        # generates a presigned URL for HTTP GET operations
-        presigned_url = client.presigned_get_object(
-            bucket_name=BUCKET,
-            object_name=join(PREFIX, name),
-        )
-
+        columns = metadata["columns"]
+        featuretypes = metadata["featuretypes"]
+        filename = metadata["filename"]
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-        return {"name": name, "filename": filename, "columns": columns, "url": presigned_url}
-    except NoSuchKey:
+        return {"name": name, "columns": columns, "filename": filename}
+    except FileNotFoundError:
         raise NotFound("The specified dataset does not exist")
-
-
-def make_bucket(name):
-    """Creates the bucket in MinIO. Ignores exception if bucket already exists.
-
-    Args:
-        name: the bucket name
-    """
-    try:
-        client.make_bucket(name)
-    except BucketAlreadyOwnedByYou:
-        pass
 
 
 def get_file_length(file):
@@ -179,28 +108,3 @@ def read_csv(file, nrows=5, th=0.9):
     df = pd.read_csv(file, header=header, prefix="col")
     file.seek(0, SEEK_SET)
     return df
-
-
-def infer_featuretypes(df, nrows=5):
-    """Infer featuretypes from DataFrame columns."""
-    featuretypes = []
-    for col in df.columns:
-        if df.dtypes[col].kind == "O":
-            if is_datetime(df[col].iloc[:nrows]):
-                featuretypes.append("DateTime")
-            else:
-                featuretypes.append("Categorical")
-        else:
-            featuretypes.append("Numerical")
-    return featuretypes
-
-
-def is_datetime(column):
-    """Returns whether a column is a DateTime."""
-    for _, value in column.iteritems():
-        try:
-            parse(value)
-            break
-        except ValueError:
-            return False
-    return True

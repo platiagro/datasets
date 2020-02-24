@@ -1,43 +1,10 @@
 import unittest
 from io import BytesIO
 
-from minio import Minio
-from minio.error import ResponseError
-
 from datasets.api import app
-from datasets.datasets import BUCKET, client
 
 
 class TestApi(unittest.TestCase):
-
-    def setUp(self):
-        # ensures that the bucket exists and is empty
-        self.empty_bucket()
-        self.make_bucket()
-
-    def tearDown(self):
-        # removes bucket after the tests complete
-        self.empty_bucket()
-        self.remove_bucket()
-
-    def empty_bucket(self):
-        try:
-            for obj in client.list_objects(BUCKET, prefix="", recursive=True):
-                client.remove_object(BUCKET, obj.object_name)
-        except:
-            pass
-
-    def make_bucket(self):
-        try:
-            client.make_bucket(BUCKET)
-        except:
-            pass
-
-    def remove_bucket(self):
-        try:
-            client.remove_bucket(BUCKET)
-        except:
-            pass
 
     def mock_file(self):
         return (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
@@ -64,21 +31,7 @@ class TestApi(unittest.TestCase):
         with app.test_client() as c:
             rv = c.get("/v1/datasets")
             result = rv.get_json()
-            expected = []
-            self.assertListEqual(result, expected)
-
-            rv = c.post("/v1/datasets", data={
-                "file": self.mock_file(),
-            })
-
-            rv = c.get("/v1/datasets")
-            result = rv.get_json()
-            for r in result:
-                self.assertIn("name", r)
-                del r["name"]
-
-            expected = [{"filename": "iris.data"}]
-            self.assertListEqual(result, expected)
+            self.assertIsInstance(result, list)
 
     def test_create_dataset(self):
         with app.test_client() as c:
@@ -103,7 +56,7 @@ class TestApi(unittest.TestCase):
             })
             result = rv.get_json()
             expected = {
-                "message": "featuretypes must be one of Numerical, Categorical, DateTime"}
+                "message": "featuretype must be one of DateTime, Numerical, Categorical"}
 
             rv = c.post("/v1/datasets", data={
                 "file": self.mock_file(),
@@ -111,14 +64,13 @@ class TestApi(unittest.TestCase):
             })
             result = rv.get_json()
             expected = {
-                "message": "featuretypes must be the same length as columns"}
+                "message": "featuretypes must be the same length as the DataFrame columns"}
 
             rv = c.post("/v1/datasets", data={
                 "file": self.mock_file(),
             })
             result = rv.get_json()
             expected = {
-                "filename": "iris.data",
                 "columns": [
                     {"name": "col0", "featuretype": "DateTime"},
                     {"name": "col1", "featuretype": "Numerical"},
@@ -127,13 +79,12 @@ class TestApi(unittest.TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "filename": "iris.data",
             }
-            # name and url are machine-generated
-            # we assert they exist, but we don't their values
+            # name is machine-generated
+            # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
-            self.assertIn("url", result)
-            del result["url"]
             self.assertDictEqual(expected, result)
 
             rv = c.post("/v1/datasets", data={
@@ -142,7 +93,6 @@ class TestApi(unittest.TestCase):
             })
             result = rv.get_json()
             expected = {
-                "filename": "iris.data",
                 "columns": [
                     {"name": "col0", "featuretype": "DateTime"},
                     {"name": "col1", "featuretype": "Numerical"},
@@ -151,11 +101,10 @@ class TestApi(unittest.TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "filename": "iris.data",
             }
             self.assertIn("name", result)
             del result["name"]
-            self.assertIn("url", result)
-            del result["url"]
             self.assertDictEqual(expected, result)
 
     def test_get_dataset(self):
@@ -173,7 +122,6 @@ class TestApi(unittest.TestCase):
             rv = c.get("/v1/datasets/{}".format(name))
             result = rv.get_json()
             expected = {
-                "filename": "iris.data",
                 "columns": [
                     {"name": "col0", "featuretype": "DateTime"},
                     {"name": "col1", "featuretype": "Numerical"},
@@ -182,13 +130,12 @@ class TestApi(unittest.TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "filename": "iris.data",
             }
-            # name and url are machine-generated
-            # we assert they exist, but we don't their values
+            # name is machine-generated
+            # we assert it exists, but we don't check its value
             self.assertIn("name", result)
             del result["name"]
-            self.assertIn("url", result)
-            del result["url"]
             self.assertDictEqual(expected, result)
 
     def test_list_columns(self):
@@ -241,7 +188,7 @@ class TestApi(unittest.TestCase):
             })
             result = rv.get_json()
             expected = {
-                "message": "featuretype must be one of Numerical, Categorical, DateTime"}
+                "message": "featuretype must be one of DateTime, Numerical, Categorical"}
             self.assertDictEqual(expected, result)
 
             rv = c.patch("/v1/datasets/{}/columns/col0".format(name), json={
