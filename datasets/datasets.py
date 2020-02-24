@@ -5,9 +5,8 @@ from uuid import uuid4
 import pandas as pd
 import platiagro
 from platiagro import load_dataset, save_dataset, load_metadata
+from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
-
-from .featuretypes import infer_featuretypes, validate_featuretypes
 
 
 def list_datasets():
