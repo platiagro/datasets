@@ -21,31 +21,31 @@ def ping():
 
 @app.route("/datasets", methods=["GET"])
 def handle_list_datasets():
-    """Handles GET requests to /v1/datasets."""
+    """Handles GET requests to /datasets."""
     return jsonify(list_datasets())
 
 
 @app.route("/datasets", methods=["POST"])
 def handle_post_datasets():
-    """Handles POST requests to /v1/datasets."""
+    """Handles POST requests to /datasets."""
     return jsonify(create_dataset(request.files))
 
 
 @app.route("/datasets/<name>", methods=["GET"])
 def handle_get_dataset(name):
-    """Handles GET requests to /v1/datasets/<name>."""
+    """Handles GET requests to /datasets/<name>."""
     return jsonify(get_dataset(name))
 
 
 @app.route("/datasets/<dataset>/columns", methods=["GET"])
 def handle_list_columns(dataset):
-    """Handles GET requests to /v1/datasets/<dataset>/columns."""
+    """Handles GET requests to /datasets/<dataset>/columns."""
     return jsonify(list_columns(dataset))
 
 
 @app.route("/datasets/<dataset>/columns/<column>", methods=["PATCH"])
 def handle_patch_column(dataset, column):
-    """Handles PATCH requests to /v1/datasets/<dataset>/columns/<column>."""
+    """Handles PATCH requests to /datasets/<dataset>/columns/<column>."""
     featuretype = request.get_json().get("featuretype")
     return jsonify(update_column(dataset, column, featuretype))
 
