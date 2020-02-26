@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """WSGI server."""
 import argparse
+import sys
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -57,7 +58,8 @@ def handle_errors(e):
     return jsonify({"message": e.description}), e.code
 
 
-if __name__ == "__main__":
+def parse_args(args):
+    """Takes argv and parses API options."""
     parser = argparse.ArgumentParser(
         description="Datasets API"
     )
@@ -65,8 +67,13 @@ if __name__ == "__main__":
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
     )
     parser.add_argument("--enable-cors", action="count")
-    args = parser.parse_args()
-    # Enable CORS
+    return parser.parse_args(args)
+
+
+if __name__ == "__main__":
+    args = parse_args(sys.argv[1:])
+
+    # Enable CORS if required
     if args.enable_cors:
         CORS(app)
 

@@ -1,7 +1,7 @@
 import unittest
 from io import BytesIO
 
-from datasets.api import app
+from datasets.api import app, parse_args
 
 
 class TestApi(unittest.TestCase):
@@ -19,6 +19,15 @@ class TestApi(unittest.TestCase):
                         b"Numerical\n" +
                         b"Numerical\n" +
                         b"Categorical"), "featuretypes.txt",)
+
+    def test_parse_args(self):
+        parser = parse_args([])
+        self.assertEqual(parser.port, 8080)
+        self.assertFalse(parser.enable_cors)
+
+        parser = parse_args(["--enable-cors", "--port", "3000"])
+        self.assertEqual(parser.port, 3000)
+        self.assertTrue(parser.enable_cors)
 
     def test_ping(self):
         with app.test_client() as c:
