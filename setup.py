@@ -1,5 +1,8 @@
 from setuptools import find_packages, setup
 
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
+
 extras = {
     "testing": [
         "pytest>=4.4.0",
@@ -18,13 +21,7 @@ setup(
     license="Apache",
     url="https://github.com/platiagro/datasets",
     packages=find_packages(),
-    install_requires=[
-        # WSGI server
-        "Flask==1.1.1",
-        "Flask-Cors==3.0.8",
-        # PlatIAgro SDK
-        "platiagro @ git+https://github.com/fberanizo/sdk.git@feature/jupyter-notebook-utils",
-    ],
+    install_requires=requirements,
     extras_require=extras,
     python_requires=">=3.6.0",
     classifiers=[
