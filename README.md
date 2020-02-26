@@ -108,11 +108,11 @@ API Reference with examples.
 
 **Lists datasets:** <br>
 method: GET <br>
-url: /v1/datasets
+url: /datasets
 
 ```bash
 curl -X GET \
-  http://localhost:8080/v1/datasets
+  http://localhost:8080/datasets
 ```
 
 Expected Output:
@@ -123,13 +123,13 @@ Expected Output:
 
 **Uploads a dataset:** <br>
 method: POST <br>
-url: /v1/datasets
+url: /datasets
 
 With feature types:
 
 ```bash
 curl -X POST \
-  http://localhost:8080/v1/datasets \
+  http://localhost:8080/datasets \
   -H "Content-Type: multipart/form-data" \
   -F file=@iris.data \
   -F featuretypes=@featuretypes.txt
@@ -139,7 +139,7 @@ Without feature types:
 
 ```bash
 curl -X POST \
-  http://localhost:8080/v1/datasets \
+  http://localhost:8080/datasets \
   -H "Content-Type: multipart/form-data" \
   -F file=@iris.data
 ```
@@ -152,11 +152,11 @@ Expected Output:
 
 **Details a dataset** <br>
 method: GET <br>
-url: /v1/datasets/:dataset
+url: /datasets/:dataset
 
 ```bash
 curl -X GET \
-  http://localhost:8080/v1/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4
+  http://localhost:8080/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4
 ```
 
 Expected Output:
@@ -169,11 +169,11 @@ Expected Output:
 
 **Lists columns and feature types** <br>
 method: GET <br>
-url: /v1/datasets/:dataset/columns
+url: /datasets/:dataset/columns
 
 ```bash
 curl -X GET \
-  http://localhost:8080/v1/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4/columns
+  http://localhost:8080/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4/columns
 ```
 
 Expected Output:
@@ -184,11 +184,11 @@ Expected Output:
 
 **Updates a column:** <br>
 method: PATCH <br>
-url: /v1/datasets/:dataset/columns/:column
+url: /datasets/:dataset/columns/:column
 
 ```bash
 curl -X PATCH \
- http://localhost:8080/v1/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4/columns/col0 \
+ http://localhost:8080/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4/columns/col0 \
   -H 'Content-Type: application/json' \
   -d '{"featuretype": "Categorical"}'
 ```
