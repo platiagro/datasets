@@ -1,10 +1,10 @@
 # PlatIAgro Datasets
 
 [![Build Status](https://travis-ci.org/platiagro/datasets.svg)](https://travis-ci.org/platiagro/datasets)
-[![codecov](https://codecov.io/gh/platiagro/datasets/graph/badge.svg)](https://codecov.io/gh/platiagro/datasets)
+[![codecov](https://codecov.io/gh/platiagro/datasets/branch/master/graph/badge.svg)](https://codecov.io/gh/platiagro/datasets)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Gitter](https://badges.gitter.im/platiagro/community.svg)](https://gitter.im/platiagro/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Known Vulnerabilities](https://snyk.io/test/github/platiagro/datasets/master/badge.svg?targetFile=setup.py)](https://snyk.io/test/github/platiagro/datasets/master/?targetFile=setup.py)
+[![Known Vulnerabilities](https://snyk.io/test/github/platiagro/datasets/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/platiagro/datasets?targetFile=requirements.txt)
 
 ## Requirements
 
