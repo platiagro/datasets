@@ -118,7 +118,7 @@ curl -X GET \
 Expected Output:
 
 ```bash
-[{"filename":"iris.data","name":"c568a929-91a3-4b84-9ef9-f1887518abb4"}]
+["c568a929-91a3-4b84-9ef9-f1887518abb4"]
 ```
 
 **Uploads a dataset:** <br>
@@ -147,7 +147,7 @@ curl -X POST \
 Expected Output:
 
 ```bash
-{"columns":[{"featuretype":"Numerical","name":"col0"},{"featuretype":"Numerical","name":"col1"},{"featuretype":"Numerical","name":"col2"},{"featuretype":"Numerical","name":"col3"},{"featuretype":"Categorical","name":"col4"}],"filename":"iris.data","name":"c568a929-91a3-4b84-9ef9-f1887518abb4","url":"http://play.min.io/anonymous/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=Q3AM3UQ867SPQQA43P2F%2F20200131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20200131T145838Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=07627aa6d4369cb00edfca5c65d87d0e263622944a7728889b131979263b8cc6"}
+{"columns":[{"featuretype":"Numerical","name":"col0"},{"featuretype":"Numerical","name":"col1"},{"featuretype":"Numerical","name":"col2"},{"featuretype":"Numerical","name":"col3"},{"featuretype":"Categorical","name":"col4"}],"filename":"iris.data","name":"c568a929-91a3-4b84-9ef9-f1887518abb4"}
 ```
 
 **Details a dataset** <br>
@@ -162,7 +162,7 @@ curl -X GET \
 Expected Output:
 
 ```bash
-{"columns":[{"featuretype":"Numerical","name":"col0"},{"featuretype":"Numerical","name":"col1"},{"featuretype":"Numerical","name":"col2"},{"featuretype":"Numerical","name":"col3"},{"featuretype":"Categorical","name":"col4"}],"filename":"iris.data","name":"c568a929-91a3-4b84-9ef9-f1887518abb4","url":"http://play.min.io/anonymous/datasets/c568a929-91a3-4b84-9ef9-f1887518abb4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=Q3AM3UQ867SPQQA43P2F%2F20200131%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20200131T145838Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=07627aa6d4369cb00edfca5c65d87d0e263622944a7728889b131979263b8cc6"}
+{"columns":[{"featuretype":"Numerical","name":"col0"},{"featuretype":"Numerical","name":"col1"},{"featuretype":"Numerical","name":"col2"},{"featuretype":"Numerical","name":"col3"},{"featuretype":"Categorical","name":"col4"}],"filename":"iris.data","name":"c568a929-91a3-4b84-9ef9-f1887518abb4"}
 ```
 
 ### Columns
