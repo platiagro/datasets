@@ -37,8 +37,6 @@ def create_dataset(files):
     if file.filename == "":
         raise BadRequest("No selected file")
 
-    file_length = get_file_length(file)
-
     # reads csv file into a DataFrame
     df = read_csv(file)
     columns = df.columns.values.tolist()
@@ -59,7 +57,7 @@ def create_dataset(files):
         "filename": file.filename,
     }
 
-    ## uses PlatIAgro SDK to save the dataset
+    # uses PlatIAgro SDK to save the dataset
     save_dataset(name, df, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
@@ -76,7 +74,6 @@ def get_dataset(name):
         The dataset info.
     """
     try:
-        df = load_dataset(name)
         metadata = load_metadata(name)
 
         columns = metadata["columns"]

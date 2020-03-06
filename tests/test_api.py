@@ -6,19 +6,26 @@ from datasets.api import app, parse_args
 
 class TestApi(unittest.TestCase):
 
-    def mock_file(self):
+    def iris_file(self):
         return (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
                         b"01/01/2001,4.9,3.0,1.4,0.2,Iris-setosa\n" +
                         b"01/01/2002,4.7,3.2,1.3,0.2,Iris-setosa\n" +
                         b"01/01/2003,4.6,3.1,1.5,0.2,Iris-setosa"), "iris.data",)
 
-    def mock_featuretypes(self):
+    def iris_featuretypes(self):
         return (BytesIO(b"DateTime\n" +
                         b"Numerical\n" +
                         b"Numerical\n" +
                         b"Numerical\n" +
                         b"Numerical\n" +
                         b"Categorical"), "featuretypes.txt",)
+
+    def boston_file(self):
+        return (BytesIO(b"0.00632,18,2.31,0,0.538,6.575,65.2,4.09,1,296,15.3,396.9,4.98,24\n" +
+                        b"0.02731,0,7.07,0,0.469,6.421,78.9,4.9671,2,242,17.8,396.9,9.14,21.6\n" +
+                        b"0.02729,0,7.07,0,0.469,7.185,61.1,4.9671,2,242,17.8,392.83,4.03,34.7\n" +
+                        b"0.03237,0,2.18,0,0.458,6.998,45.8,6.0622,3,222,18.7,394.63,2.94,33.4\n" +
+                        b"0.06905,0,2.18,0,0.458,7.147,54.2,6.0622,3,222,18.7,396.9,5.33,36.2"), "boston.data",)
 
     def test_parse_args(self):
         parser = parse_args([])
@@ -55,7 +62,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
                 "featuretypes": (BytesIO(b"date\n" +
                                          b"float\n" +
                                          b"float\n" +
@@ -68,7 +75,7 @@ class TestApi(unittest.TestCase):
                 "message": "featuretype must be one of DateTime, Numerical, Categorical"}
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
                 "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
             })
             result = rv.get_json()
@@ -76,7 +83,7 @@ class TestApi(unittest.TestCase):
                 "message": "featuretypes must be the same length as the DataFrame columns"}
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
             })
             result = rv.get_json()
             expected = {
@@ -97,8 +104,37 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
-                "featuretypes": self.mock_featuretypes(),
+                "file": self.boston_file(),
+            })
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "Numerical"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Numerical"},
+                    {"name": "col6", "featuretype": "Numerical"},
+                    {"name": "col7", "featuretype": "Numerical"},
+                    {"name": "col8", "featuretype": "Numerical"},
+                    {"name": "col9", "featuretype": "Numerical"},
+                    {"name": "col10", "featuretype": "Numerical"},
+                    {"name": "col11", "featuretype": "Numerical"},
+                    {"name": "col12", "featuretype": "Numerical"},
+                    {"name": "col13", "featuretype": "Numerical"},
+                ],
+                "filename": "boston.data",
+            }
+            # name is machine-generated
+            # we assert it exists, but we don't assert their values
+            self.assertIn("name", result)
+            del result["name"]
+            self.assertDictEqual(expected, result)
+
+            rv = c.post("/datasets", data={
+                "file": self.iris_file(),
+                "featuretypes": self.iris_featuretypes(),
             })
             result = rv.get_json()
             expected = {
@@ -124,7 +160,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
             })
             name = rv.get_json().get("name")
 
@@ -155,7 +191,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
             })
             name = rv.get_json().get("name")
 
@@ -181,7 +217,7 @@ class TestApi(unittest.TestCase):
             self.assertDictEqual(expected, result)
 
             rv = c.post("/datasets", data={
-                "file": self.mock_file(),
+                "file": self.iris_file(),
             })
             name = rv.get_json().get("name")
 

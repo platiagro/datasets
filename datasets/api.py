@@ -9,6 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .columns import list_columns, update_column
 from .datasets import list_datasets, create_dataset, get_dataset
+from .samples import init_datasets
 
 app = Flask(__name__)
 
@@ -67,6 +68,12 @@ def parse_args(args):
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
     )
     parser.add_argument("--enable-cors", action="count")
+    parser.add_argument(
+        "--debug", action="count", help="Enable debug"
+    )
+    parser.add_argument(
+        "--samples-config", help="Path to sample datasets config file."
+    )
     return parser.parse_args(args)
 
 
@@ -77,4 +84,8 @@ if __name__ == "__main__":
     if args.enable_cors:
         CORS(app)
 
-    app.run(host="0.0.0.0", port=args.port)
+    # Install sample datasets if required
+    if args.samples_config:
+        init_datasets(args.samples_config)
+
+    app.run(host="0.0.0.0", port=args.port, debug=args.debug)
