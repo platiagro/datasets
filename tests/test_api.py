@@ -1,10 +1,11 @@
-import unittest
+# -*- coding: utf-8 -*-
 from io import BytesIO
+from unittest import TestCase
 
 from datasets.api import app, parse_args
 
 
-class TestApi(unittest.TestCase):
+class TestApi(TestCase):
 
     def iris_file(self):
         return (BytesIO(b"01/01/2000,5.1,3.5,1.4,0.2,Iris-setosa\n" +
