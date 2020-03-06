@@ -62,10 +62,10 @@ def update_column(dataset, column, featuretype):
 
         metadata["featuretypes"] = featuretypes
 
-        ## uses PlatIAgro SDK to save the dataset
+        # uses PlatIAgro SDK to save the dataset
         save_dataset(dataset, df, metadata=metadata)
 
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise NotFound("The specified dataset does not exist")
     except ValueError as e:
         raise BadRequest(str(e))

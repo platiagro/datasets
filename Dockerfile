@@ -11,8 +11,11 @@ COPY ./setup.py /app/setup.py
 
 RUN pip install /app/
 
+COPY ./samples /samples
+
 WORKDIR /app/
 
 EXPOSE 8080
 
-CMD ["python", "-m", "datasets.api"]
+ENTRYPOINT ["python", "-m", "datasets.api"]
+CMD ["--samples-config", "/samples/config.json"]

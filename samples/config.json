@@ -1,0 +1,10 @@
+[
+    {
+        "name": "iris",
+        "file": "/samples/iris.csv"
+    },
+    {
+        "name": "boston",
+        "file": "/samples/boston.csv"
+    }
+]

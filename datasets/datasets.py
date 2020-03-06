@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from os import SEEK_SET, SEEK_END
+from os import SEEK_SET
 from uuid import uuid4
 
 import pandas as pd
 import platiagro
-from platiagro import load_dataset, save_dataset, load_metadata
+from platiagro import save_dataset, load_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -22,7 +22,7 @@ def create_dataset(files):
     """Creates a new dataset in our object storage.
 
     Args:
-        files: file objects.
+        files (dict): file objects.
 
     Returns:
         The dataset info.
@@ -36,8 +36,6 @@ def create_dataset(files):
     # submits an empty part without filename
     if file.filename == "":
         raise BadRequest("No selected file")
-
-    file_length = get_file_length(file)
 
     # reads csv file into a DataFrame
     df = read_csv(file)
@@ -59,7 +57,7 @@ def create_dataset(files):
         "filename": file.filename,
     }
 
-    ## uses PlatIAgro SDK to save the dataset
+    # uses PlatIAgro SDK to save the dataset
     save_dataset(name, df, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
@@ -70,13 +68,12 @@ def get_dataset(name):
     """Details a dataset from our object storage.
 
     Args:
-        name: the dataset name to look for in our object storage.
+        name (str): the dataset name to look for in our object storage.
 
     Returns:
         The dataset info.
     """
     try:
-        df = load_dataset(name)
         metadata = load_metadata(name)
 
         columns = metadata["columns"]
@@ -88,16 +85,17 @@ def get_dataset(name):
         raise NotFound("The specified dataset does not exist")
 
 
-def get_file_length(file):
-    """Returns the file length."""
-    file.seek(0, SEEK_END)
-    file_length = file.tell()
-    file.seek(0, SEEK_SET)
-    return file_length
-
-
 def read_csv(file, nrows=5, th=0.9):
-    """Read a csv file into a DataFrame. Infers whether a header column exists."""
+    """Read a csv file into a DataFrame. Infers whether a header column exists.
+
+    Args:
+        file (IO): filepath or buffer.
+        nrows (int, optional): number of rows to peek. Default: 5.
+        th (float, optional): threshold.
+
+    Returns:
+        A pandas.DataFrame.
+    """
     df1 = pd.read_csv(file, header="infer", nrows=nrows)
     file.seek(0, SEEK_SET)
     df2 = pd.read_csv(file, header=None, nrows=nrows)
