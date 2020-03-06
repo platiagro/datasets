@@ -17,5 +17,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", " .api.main"]
+ENTRYPOINT ["python", "-m", "datasets.api"]
 CMD ["--samples-config", "/samples/config.json"]
