@@ -20,8 +20,10 @@ def init_datasets(config_path):
             filename = config_path.split("/")[-1]
 
             df = pd.read_csv(file)
+            columns = df.columns.values.tolist()
             featuretypes = infer_featuretypes(df)
             metadata = {
+                "columns": columns,
                 "featuretypes": featuretypes,
                 "filename": filename,
             }
