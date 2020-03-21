@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from platiagro import load_dataset, save_dataset, load_metadata
+from platiagro import load_dataset, save_dataset, stat_dataset
 from werkzeug.exceptions import BadRequest, NotFound
 
 from platiagro.featuretypes import validate_featuretypes
@@ -15,7 +15,7 @@ def list_columns(dataset):
         A list of columns names and featuretypes.
     """
     try:
-        metadata = load_metadata(dataset)
+        metadata = stat_dataset(dataset)
 
         columns = metadata["columns"]
         featuretypes = metadata["featuretypes"]
@@ -37,7 +37,7 @@ def update_column(dataset, column, featuretype):
         The column info.
     """
     try:
-        metadata = load_metadata(dataset)
+        metadata = stat_dataset(dataset)
         columns = metadata["columns"]
 
         if column not in columns:
