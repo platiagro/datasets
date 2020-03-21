@@ -9,62 +9,50 @@ def list_columns(dataset):
     """Lists all columns from a dataset.
 
     Args:
-        dataset: the dataset name.
+        dataset (str): the dataset name.
 
     Returns:
-        A list of columns names and dtypes.
+        A list of columns names and featuretypes.
     """
-    columns = []
     try:
-        df = load_dataset(dataset)
         metadata = load_metadata(dataset)
 
-        names = df.columns.tolist()
+        columns = metadata["columns"]
         featuretypes = metadata["featuretypes"]
-
-        for name, ftype in zip(names, featuretypes):
-            columns.append({
-                "name": name,
-                "featuretype": ftype,
-            })
+        columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+        return columns
     except FileNotFoundError:
         raise NotFound("The specified dataset does not exist")
-
-    return columns
 
 
 def update_column(dataset, column, featuretype):
     """Updates a column from a dataset.
 
     Args:
-        dataset: the dataset name.
-        column: the column name.
-        featuretype: the feature type (Numerical, Categorical, or DateTime).
+        dataset (str): the dataset name.
+        column (str): the column name.
+        featuretype (str): the feature type (Numerical, Categorical, or DateTime).
 
     Returns:
         The column info.
     """
     try:
-        df = load_dataset(dataset)
         metadata = load_metadata(dataset)
-
-        columns = df.columns.tolist()
-        featuretypes = metadata["featuretypes"]
+        columns = metadata["columns"]
 
         if column not in columns:
             raise NotFound("The specified column does not exist")
 
         # sets new metadata
-        idx = columns.index(column)
-        featuretypes[idx] = featuretype
+        index = columns.index(column)
+        metadata["featuretypes"][index] = featuretype
 
-        validate_featuretypes(featuretypes)
+        validate_featuretypes(metadata["featuretypes"])
 
-        metadata["featuretypes"] = featuretypes
+        df = load_dataset(dataset)
 
         # uses PlatIAgro SDK to save the dataset
         save_dataset(dataset, df, metadata=metadata)
-
     except FileNotFoundError:
         raise NotFound("The specified dataset does not exist")
     except ValueError as e:

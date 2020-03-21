@@ -1,0 +1,249 @@
+openapi: 3.0.0
+info:
+  title: PlatIAgro Datasets API
+  version: "0.0.2"
+  description: >
+    These are the docs for PlatIAgro Datasets API.
+    The endpoints below are usually accessed by the PlatIAgro Web-UI.
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: "Datasets"
+    description: >
+      Datasets are any collection of information that an algorithm may process.
+      They are usually imported from a spreadsheet (CSV), and keep metadata about the columns they contain and their feature types.
+paths:
+  /datasets:
+    get:
+      summary: "List all datasets."
+      tags:
+        - "Datasets"
+      responses:
+        "200":
+          $ref: "#/components/responses/Datasets"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      summary: "Create a new dataset."
+      tags:
+        - "Datasets"
+      requestBody:
+        $ref: "#/components/requestBodies/Dataset"
+      responses:
+        "200":
+          $ref: "#/components/responses/Dataset"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /datasets/{name}:
+    get:
+      summary: "Detail a specific dataset by ID."
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Dataset"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /datasets/{name}/columns:
+    get:
+      summary: "List all columns and feature types."
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Columns"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /datasets/{name}/columns/{column}:
+    patch:
+      summary: "Update the feature types of a column by the column name."
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: column
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: "#/components/requestBodies/Column"
+      responses:
+        "200":
+          $ref: "#/components/responses/Column"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+components:
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        name:
+          type: string
+        filename:
+          type: string
+        columns:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Column"
+    Datasets:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Dataset"
+    Column:
+      type: object
+      properties:
+        featuretype:
+          type: string
+          enum: [Numerical, Categorical, DateTime]
+        name:
+          type: string
+    Columns:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Column"
+  requestBodies:
+    Dataset:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+              featuretypes:
+                type: string
+                format: binary
+    Column:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              featuretype:
+                type: string
+                enum: [Numerical, Categorical, DateTime]
+  responses:
+    Dataset:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Dataset"
+    Datasets:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Datasets"
+    Column:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Column"
+    Columns:
+      description: ""
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Columns"
+    Message:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    BadRequest:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+            required:
+              - message
+    NotFound:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "The specified ... does not exist"
+            required:
+              - message
+    InternalServerError:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "An internal failure occurred."
+            required:
+              - message
+    ServiceUnavailable:
+      description: ""
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "The service is unavailable. Try your call again."
+            required:
+              - message

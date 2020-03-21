@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from json import dump
-from os.path import dirname, join
 from unittest import TestCase
 
 from datasets.samples import init_datasets
