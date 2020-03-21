@@ -13,9 +13,10 @@ def list_datasets():
     """Lists all datasets from our object storage.
 
     Returns:
-        A list of all datasets names.
+        A list of all datasets.
     """
-    return platiagro.list_datasets()
+    datasets = platiagro.list_datasets()
+    return [get_dataset(name) for name in datasets]
 
 
 def create_dataset(files):

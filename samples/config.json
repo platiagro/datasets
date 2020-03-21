@@ -6,5 +6,9 @@
     {
         "name": "boston",
         "file": "/samples/boston.csv"
+    },
+    {
+        "name": "imdb",
+        "file": "/samples/imdb.csv"
     }
 ]
