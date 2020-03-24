@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pandas as pd
 import platiagro
-from platiagro import save_dataset, stat_dataset
+from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -77,9 +77,16 @@ def get_dataset(name):
     try:
         metadata = stat_dataset(name)
 
-        columns = metadata["columns"]
-        featuretypes = metadata["featuretypes"]
-        filename = metadata["filename"]
+        try:
+            columns = metadata["columns"]
+            featuretypes = metadata["featuretypes"]
+            filename = metadata["filename"]
+        except KeyError:
+            df = load_dataset(name)
+            columns = df.columns.tolist()
+            featuretypes = infer_featuretypes(df)
+            filename = ""
+
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return {"name": name, "columns": columns, "filename": filename}
     except FileNotFoundError:
