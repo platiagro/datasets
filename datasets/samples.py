@@ -19,7 +19,7 @@ def init_datasets(config_path):
             file = dataset["file"]
             filename = config_path.split("/")[-1]
 
-            df = pd.read_csv(file)
+            df = pd.read_csv(file, sep=None, engine="python")
             columns = df.columns.values.tolist()
             featuretypes = infer_featuretypes(df)
             metadata = {
