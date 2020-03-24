@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+from io import StringIO
 from os import SEEK_SET
 from uuid import uuid4
 
 import pandas as pd
 import platiagro
-from platiagro import save_dataset, stat_dataset
+from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -39,7 +40,7 @@ def create_dataset(files):
         raise BadRequest("No selected file")
 
     # reads csv file into a DataFrame
-    df = read_csv(file)
+    df = read_csv(StringIO(file.read().decode("utf-8")))
     columns = df.columns.values.tolist()
 
     # checks if the post request has the 'featuretypes' part
@@ -77,9 +78,16 @@ def get_dataset(name):
     try:
         metadata = stat_dataset(name)
 
-        columns = metadata["columns"]
-        featuretypes = metadata["featuretypes"]
-        filename = metadata["filename"]
+        try:
+            columns = metadata["columns"]
+            featuretypes = metadata["featuretypes"]
+            filename = metadata["filename"]
+        except KeyError:
+            df = load_dataset(name)
+            columns = df.columns.tolist()
+            featuretypes = infer_featuretypes(df)
+            filename = ""
+
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return {"name": name, "columns": columns, "filename": filename}
     except FileNotFoundError:
@@ -97,12 +105,12 @@ def read_csv(file, nrows=5, th=0.9):
     Returns:
         A pandas.DataFrame.
     """
-    df1 = pd.read_csv(file, header="infer", nrows=nrows)
+    df1 = pd.read_csv(file, sep=None, engine="python", header="infer", nrows=nrows)
     file.seek(0, SEEK_SET)
-    df2 = pd.read_csv(file, header=None, nrows=nrows)
+    df2 = pd.read_csv(file, sep=None, engine="python", header=None, nrows=nrows)
     file.seek(0, SEEK_SET)
     sim = (df1.dtypes.values == df2.dtypes.values).mean()
     header = "infer" if sim < th else None
-    df = pd.read_csv(file, header=header, prefix="col")
+    df = pd.read_csv(file, sep=None, engine="python", header=header, prefix="col")
     file.seek(0, SEEK_SET)
     return df

@@ -2,7 +2,7 @@
 from platiagro import load_dataset, save_dataset, stat_dataset
 from werkzeug.exceptions import BadRequest, NotFound
 
-from platiagro.featuretypes import validate_featuretypes
+from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 
 
 def list_columns(dataset):
@@ -17,8 +17,14 @@ def list_columns(dataset):
     try:
         metadata = stat_dataset(dataset)
 
-        columns = metadata["columns"]
-        featuretypes = metadata["featuretypes"]
+        try:
+            columns = metadata["columns"]
+            featuretypes = metadata["featuretypes"]
+        except KeyError:
+            df = load_dataset(dataset)
+            columns = df.columns.tolist()
+            featuretypes = infer_featuretypes(df)
+
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return columns
     except FileNotFoundError:

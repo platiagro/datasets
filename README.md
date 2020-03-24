@@ -35,7 +35,7 @@ export MINIO_SECRET_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 Then, build a docker image that launches the API server:
 
 ```bash
-docker build -t platiagro/datasets:0.0.1 .
+docker build -t platiagro/datasets:0.0.2 .
 ```
 
 Finally, start the API server:
@@ -46,7 +46,7 @@ docker run -it -p 8080:8080 \
   --env "MINIO_ENDPOINT=$MINIO_ENDPOINT" \
   --env "MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY" \
   --env "MINIO_SECRET_KEY=$MINIO_SECRET_KEY" \
-  platiagro/datasets:0.0.1
+  platiagro/datasets:0.0.2
 ```
 
 ### Run Local:
