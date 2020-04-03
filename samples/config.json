@@ -10,5 +10,9 @@
     {
         "name": "imdb",
         "file": "/samples/imdb.csv"
+    },
+    {
+        "name": "titanic",
+        "file": "/samples/titanic.csv"
     }
 ]
