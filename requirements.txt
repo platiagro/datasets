@@ -3,3 +3,5 @@ Flask==1.1.1
 Flask-Cors==3.0.8
 # PlatIAgro SDK
 platiagro @ git+https://github.com/platiagro/sdk.git@master
+# Character Encoding Detector
+chardet==3.0.4

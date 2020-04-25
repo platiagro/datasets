@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pandas as pd
 import platiagro
+from chardet.universaldetector import UniversalDetector
 from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
@@ -40,7 +41,7 @@ def create_dataset(files):
         raise BadRequest("No selected file")
 
     # reads csv file into a DataFrame
-    df = read_csv(StringIO(file.read().decode("utf-8")))
+    df = read_csv(file)
     columns = df.columns.values.tolist()
 
     # checks if the post request has the 'featuretypes' part
@@ -95,7 +96,9 @@ def get_dataset(name):
 
 
 def read_csv(file, nrows=5, th=0.9):
-    """Read a csv file into a DataFrame. Infers whether a header column exists.
+    """Read a csv file into a DataFrame.
+
+    Infers the encoding and whether a header column exists
 
     Args:
         file (IO): filepath or buffer.
@@ -105,6 +108,15 @@ def read_csv(file, nrows=5, th=0.9):
     Returns:
         A pandas.DataFrame.
     """
+    detector = UniversalDetector()
+    for line in file:
+        detector.feed(line)
+        if detector.done: break
+    detector.close()
+    encoding = detector.result.get("encoding")
+
+    file.seek(0, SEEK_SET)
+    file = StringIO(file.read().decode(encoding))
     df1 = pd.read_csv(file, sep=None, engine="python", header="infer", nrows=nrows)
     file.seek(0, SEEK_SET)
     df2 = pd.read_csv(file, sep=None, engine="python", header=None, nrows=nrows)
