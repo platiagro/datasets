@@ -57,7 +57,7 @@ def create_dataset(files):
 
     metadata = {
         "featuretypes": featuretypes,
-        "filename": file.filename,
+        "original-filename": file.filename,
     }
 
     # uses PlatIAgro SDK to save the dataset
@@ -82,7 +82,7 @@ def get_dataset(name):
         try:
             columns = metadata["columns"]
             featuretypes = metadata["featuretypes"]
-            filename = metadata["filename"]
+            filename = metadata["original-filename"]
         except KeyError:
             df = load_dataset(name)
             columns = df.columns.tolist()

@@ -25,7 +25,7 @@ def init_datasets(config_path):
             metadata = {
                 "columns": columns,
                 "featuretypes": featuretypes,
-                "filename": filename,
+                "original-filename": filename,
             }
             # uses PlatIAgro SDK to save the dataset
             save_dataset(name, df, metadata=metadata)
