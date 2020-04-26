@@ -28,3 +28,6 @@ class TestSamples(TestCase):
 
     def test_init_datasets(self):
         init_datasets("config.json")
+
+        # do it twice (like when the service is restarted)
+        init_datasets("config.json")
