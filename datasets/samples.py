@@ -27,5 +27,9 @@ def init_datasets(config_path):
                 "featuretypes": featuretypes,
                 "original-filename": filename,
             }
-            # uses PlatIAgro SDK to save the dataset
-            save_dataset(name, df, metadata=metadata)
+            try:
+                # uses PlatIAgro SDK to save the dataset
+                # marks as read only, so users can't mess with these datasets
+                save_dataset(name, df, metadata=metadata, read_only=True)
+            except PermissionError:
+                pass
