@@ -28,7 +28,9 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        pytest --cov=. --cov-report=xml
+        coverage erase
+        coverage run --branch --source=datasets -m pytest
+        coverage xml -i
       env:
         MINIO_ENDPOINT: play.min.io
         MINIO_ACCESS_KEY: Q3AM3UQ867SPQQA43P2F
@@ -38,3 +40,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Build docker image
+      run: |
+        docker build -t "platiagro/datasets:$GITHUB_SHA" .
