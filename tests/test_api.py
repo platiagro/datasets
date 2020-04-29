@@ -56,11 +56,13 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {"message": "No file part"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/datasets", data={"file": (BytesIO(), "")})
             result = rv.get_json()
             expected = {"message": "No selected file"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -74,6 +76,8 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "message": "featuretype must be one of DateTime, Numerical, Categorical"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -82,6 +86,8 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "message": "featuretypes must be the same length as the DataFrame columns"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -103,6 +109,7 @@ class TestApi(TestCase):
             self.assertIn("name", result)
             del result["name"]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.post("/datasets", data={
                 "file": self.boston_file(),
@@ -132,6 +139,7 @@ class TestApi(TestCase):
             self.assertIn("name", result)
             del result["name"]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -152,6 +160,7 @@ class TestApi(TestCase):
             self.assertIn("name", result)
             del result["name"]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_get_dataset(self):
         with app.test_client() as c:
@@ -159,6 +168,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -183,6 +193,7 @@ class TestApi(TestCase):
             self.assertIn("name", result)
             del result["name"]
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_list_columns(self):
         with app.test_client() as c:
@@ -190,6 +201,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -207,6 +219,7 @@ class TestApi(TestCase):
                 {"name": "col5", "featuretype": "Categorical"},
             ]
             self.assertListEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_update_column(self):
         with app.test_client() as c:
@@ -216,6 +229,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
@@ -228,6 +242,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {"message": "The specified column does not exist"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
             rv = c.patch("/datasets/{}/columns/col0".format(name), json={
                 "featuretype": "Invalid"
@@ -236,6 +251,7 @@ class TestApi(TestCase):
             expected = {
                 "message": "featuretype must be one of DateTime, Numerical, Categorical"}
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
             rv = c.patch("/datasets/{}/columns/col0".format(name), json={
                 "featuretype": "Numerical"
@@ -246,3 +262,4 @@ class TestApi(TestCase):
                 "featuretype": "Numerical"
             }
             self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)

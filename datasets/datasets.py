@@ -46,9 +46,15 @@ def create_dataset(files):
 
     # checks if the post request has the 'featuretypes' part
     if "featuretypes" in files:
-        ftype_file = files["featuretypes"]
-        featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
-        validate_featuretypes(featuretypes)
+        try:
+            ftype_file = files["featuretypes"]
+            featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
+            validate_featuretypes(featuretypes)
+        except ValueError as e:
+            raise BadRequest(str(e))
+
+        if len(columns) != len(featuretypes):
+            raise BadRequest("featuretypes must be the same length as the DataFrame columns")
     else:
         featuretypes = infer_featuretypes(df)
 
