@@ -107,7 +107,7 @@ def read_csv(file, nrows=5, th=0.9):
     Infers the encoding and whether a header column exists
 
     Args:
-        file (IO): filepath or buffer.
+        file (IO): file buffer.
         nrows (int, optional): number of rows to peek. Default: 5.
         th (float, optional): threshold.
 
@@ -117,7 +117,8 @@ def read_csv(file, nrows=5, th=0.9):
     detector = UniversalDetector()
     for line in file:
         detector.feed(line)
-        if detector.done: break
+        if detector.done:
+            break
     detector.close()
     encoding = detector.result.get("encoding")
 
