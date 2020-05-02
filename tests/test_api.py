@@ -175,7 +175,7 @@ class TestApi(TestCase):
             })
             name = rv.get_json().get("name")
 
-            rv = c.get("/datasets/{}".format(name))
+            rv = c.get(f"/datasets/{name}")
             result = rv.get_json()
             expected = {
                 "columns": [
@@ -208,7 +208,7 @@ class TestApi(TestCase):
             })
             name = rv.get_json().get("name")
 
-            rv = c.get("/datasets/{}/columns".format(name))
+            rv = c.get(f"/datasets/{name}/columns")
             result = rv.get_json()
             expected = [
                 {"name": "col0", "featuretype": "DateTime"},
@@ -236,7 +236,7 @@ class TestApi(TestCase):
             })
             name = rv.get_json().get("name")
 
-            rv = c.patch("/datasets/{}/columns/unk".format(name), json={
+            rv = c.patch(f"/datasets/{name}/columns/unk", json={
                 "featuretype": "Numerical"
             })
             result = rv.get_json()
@@ -244,7 +244,7 @@ class TestApi(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
-            rv = c.patch("/datasets/{}/columns/col0".format(name), json={
+            rv = c.patch(f"/datasets/{name}/columns/col0", json={
                 "featuretype": "Invalid"
             })
             result = rv.get_json()
@@ -253,7 +253,7 @@ class TestApi(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
-            rv = c.patch("/datasets/{}/columns/col0".format(name), json={
+            rv = c.patch(f"/datasets/{name}/columns/col0", json={
                 "featuretype": "Numerical"
             })
             result = rv.get_json()
