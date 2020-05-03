@@ -44,8 +44,8 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     if file.filename == "":
         raise BadRequest("No selected file")
 
-    # reads csv file into a DataFrame
-    df = read_csv(file)
+    # reads file into a DataFrame
+    df = read_into_dataframe(file)
     columns = df.columns.values.tolist()
 
     # checks if the post request has the 'featuretypes' part
@@ -102,7 +102,7 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_csv(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
+def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
     """Reads a file into a DataFrame.
 
     Infers the file encoding and whether a header column exists
