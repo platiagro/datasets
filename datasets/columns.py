@@ -2,7 +2,7 @@
 from platiagro import load_dataset, save_dataset, stat_dataset
 from werkzeug.exceptions import BadRequest, NotFound
 
-from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
+from platiagro.featuretypes import validate_featuretypes
 
 
 def list_columns(dataset):

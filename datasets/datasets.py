@@ -6,7 +6,7 @@ from uuid import uuid4
 import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
-from platiagro import load_dataset, save_dataset, stat_dataset
+from platiagro import save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
