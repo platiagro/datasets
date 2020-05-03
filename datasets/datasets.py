@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from io import StringIO
 from os import SEEK_SET
+from typing import Any, Dict, IO, List
 from uuid import uuid4
 
 import pandas as pd
@@ -11,7 +12,7 @@ from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
 
-def list_datasets():
+def list_datasets() -> List[Dict[str, Any]]:
     """Lists all datasets from our object storage.
 
     Returns:
@@ -21,14 +22,17 @@ def list_datasets():
     return [get_dataset(name) for name in datasets]
 
 
-def create_dataset(files):
+def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     """Creates a new dataset in our object storage.
 
     Args:
         files (dict): file objects.
 
     Returns:
-        The dataset info.
+        The dataset details: name, columns, and filename.
+
+    Raises:
+        BadRequest: when incoming files are missing or valid.
     """
     # checks if the post request has the file part
     if "file" not in files:
@@ -73,14 +77,17 @@ def create_dataset(files):
     return {"name": name, "columns": columns, "filename": file.filename}
 
 
-def get_dataset(name):
+def get_dataset(name: str) -> Dict[str, Any]:
     """Details a dataset from our object storage.
 
     Args:
         name (str): the dataset name to look for in our object storage.
 
     Returns:
-        The dataset info.
+        The dataset details: name, columns, and filename.
+
+    Raises:
+        NotFound: when the dataset does not exist.
     """
     try:
         metadata = stat_dataset(name)
@@ -95,10 +102,10 @@ def get_dataset(name):
         raise NotFound("The specified dataset does not exist")
 
 
-def read_csv(file, nrows=5, th=0.9):
-    """Read a csv file into a DataFrame.
+def read_csv(file: IO, nrows: int = 5, th: float = 0.9) -> pd.DataFrame:
+    """Reads a file into a DataFrame.
 
-    Infers the encoding and whether a header column exists
+    Infers the file encoding and whether a header column exists
 
     Args:
         file (IO): file buffer.
