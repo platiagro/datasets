@@ -102,23 +102,23 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_csv(file: IO, nrows: int = 5, th: float = 0.9) -> pd.DataFrame:
+def read_csv(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
     """Reads a file into a DataFrame.
 
     Infers the file encoding and whether a header column exists
 
     Args:
         file (IO): file buffer.
-        nrows (int, optional): number of rows to peek. Default: 5.
+        nrows (int, optional): number of rows to peek. Default: 100.
         th (float, optional): threshold.
 
     Returns:
         A pandas.DataFrame.
     """
     detector = UniversalDetector()
-    for line in file:
-        detector.feed(line)
-        if detector.done:
+    for line, text in enumerate(file):
+        detector.feed(text)
+        if detector.done or line > nrows:
             break
     detector.close()
     encoding = detector.result.get("encoding")
