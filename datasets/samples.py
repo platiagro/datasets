@@ -6,7 +6,7 @@ from platiagro import save_dataset
 from platiagro.featuretypes import infer_featuretypes
 
 
-def init_datasets(config_path):
+def init_datasets(config_path: str):
     """Installs the datasets from a config file.
 
     Args:

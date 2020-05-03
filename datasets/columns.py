@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+from typing import Dict, List
+
 from platiagro import load_dataset, save_dataset, stat_dataset
+from platiagro.featuretypes import validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
-from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 
-
-def list_columns(dataset):
+def list_columns(dataset: str) -> List[Dict[str, str]]:
     """Lists all columns from a dataset.
 
     Args:
@@ -13,17 +14,15 @@ def list_columns(dataset):
 
     Returns:
         A list of columns names and featuretypes.
+
+    Raises:
+        NotFound: when the dataset does not exist.
     """
     try:
         metadata = stat_dataset(dataset)
 
-        try:
-            columns = metadata["columns"]
-            featuretypes = metadata["featuretypes"]
-        except KeyError:
-            df = load_dataset(dataset)
-            columns = df.columns.tolist()
-            featuretypes = infer_featuretypes(df)
+        columns = metadata["columns"]
+        featuretypes = metadata["featuretypes"]
 
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return columns
@@ -31,7 +30,7 @@ def list_columns(dataset):
         raise NotFound("The specified dataset does not exist")
 
 
-def update_column(dataset, column, featuretype):
+def update_column(dataset: str, column: str, featuretype: str) -> Dict[str, str]:
     """Updates a column from a dataset.
 
     Args:
@@ -41,6 +40,10 @@ def update_column(dataset, column, featuretype):
 
     Returns:
         The column info.
+
+    Raises:
+        NotFound: when the dataset or column does not exist.
+        BadRequest: when the featuretype is invalid.
     """
     try:
         metadata = stat_dataset(dataset)

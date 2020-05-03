@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 from io import StringIO
 from os import SEEK_SET
+from typing import Any, Dict, IO, List
 from uuid import uuid4
 
 import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
-from platiagro import load_dataset, save_dataset, stat_dataset
+from platiagro import save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
 
-def list_datasets():
+def list_datasets() -> List[Dict[str, Any]]:
     """Lists all datasets from our object storage.
 
     Returns:
@@ -21,14 +22,17 @@ def list_datasets():
     return [get_dataset(name) for name in datasets]
 
 
-def create_dataset(files):
+def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     """Creates a new dataset in our object storage.
 
     Args:
         files (dict): file objects.
 
     Returns:
-        The dataset info.
+        The dataset details: name, columns, and filename.
+
+    Raises:
+        BadRequest: when incoming files are missing or valid.
     """
     # checks if the post request has the file part
     if "file" not in files:
@@ -40,8 +44,8 @@ def create_dataset(files):
     if file.filename == "":
         raise BadRequest("No selected file")
 
-    # reads csv file into a DataFrame
-    df = read_csv(file)
+    # reads file into a DataFrame
+    df = read_into_dataframe(file)
     columns = df.columns.values.tolist()
 
     # checks if the post request has the 'featuretypes' part
@@ -73,27 +77,24 @@ def create_dataset(files):
     return {"name": name, "columns": columns, "filename": file.filename}
 
 
-def get_dataset(name):
+def get_dataset(name: str) -> Dict[str, Any]:
     """Details a dataset from our object storage.
 
     Args:
         name (str): the dataset name to look for in our object storage.
 
     Returns:
-        The dataset info.
+        The dataset details: name, columns, and filename.
+
+    Raises:
+        NotFound: when the dataset does not exist.
     """
     try:
         metadata = stat_dataset(name)
 
-        try:
-            columns = metadata["columns"]
-            featuretypes = metadata["featuretypes"]
-            filename = metadata["original-filename"]
-        except KeyError:
-            df = load_dataset(name)
-            columns = df.columns.tolist()
-            featuretypes = infer_featuretypes(df)
-            filename = ""
+        columns = metadata["columns"]
+        featuretypes = metadata["featuretypes"]
+        filename = metadata.get("original-filename")
 
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return {"name": name, "columns": columns, "filename": filename}
@@ -101,23 +102,24 @@ def get_dataset(name):
         raise NotFound("The specified dataset does not exist")
 
 
-def read_csv(file, nrows=5, th=0.9):
-    """Read a csv file into a DataFrame.
+def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
+    """Reads a file into a DataFrame.
 
-    Infers the encoding and whether a header column exists
+    Infers the file encoding and whether a header column exists
 
     Args:
-        file (IO): filepath or buffer.
-        nrows (int, optional): number of rows to peek. Default: 5.
+        file (IO): file buffer.
+        nrows (int, optional): number of rows to peek. Default: 100.
         th (float, optional): threshold.
 
     Returns:
         A pandas.DataFrame.
     """
     detector = UniversalDetector()
-    for line in file:
-        detector.feed(line)
-        if detector.done: break
+    for line, text in enumerate(file):
+        detector.feed(text)
+        if detector.done or line > nrows:
+            break
     detector.close()
     encoding = detector.result.get("encoding")
 
