@@ -17,13 +17,8 @@ def list_columns(dataset):
     try:
         metadata = stat_dataset(dataset)
 
-        try:
-            columns = metadata["columns"]
-            featuretypes = metadata["featuretypes"]
-        except KeyError:
-            df = load_dataset(dataset)
-            columns = df.columns.tolist()
-            featuretypes = infer_featuretypes(df)
+        columns = metadata["columns"]
+        featuretypes = metadata["featuretypes"]
 
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return columns

@@ -85,15 +85,9 @@ def get_dataset(name):
     try:
         metadata = stat_dataset(name)
 
-        try:
-            columns = metadata["columns"]
-            featuretypes = metadata["featuretypes"]
-            filename = metadata["original-filename"]
-        except KeyError:
-            df = load_dataset(name)
-            columns = df.columns.tolist()
-            featuretypes = infer_featuretypes(df)
-            filename = ""
+        columns = metadata["columns"]
+        featuretypes = metadata["featuretypes"]
+        filename = metadata.get("original-filename")
 
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return {"name": name, "columns": columns, "filename": filename}
