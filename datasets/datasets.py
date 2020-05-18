@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from io import StringIO
 from os import SEEK_SET
+from os.path import splitext
 from typing import Any, Dict, IO, List
-from uuid import uuid4
+from unicodedata import normalize
 
 import pandas as pd
 import platiagro
@@ -62,8 +63,8 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     else:
         featuretypes = infer_featuretypes(df)
 
-    # generates an uuid for the dataset
-    name = str(uuid4())
+    # generate a dataset name from filename
+    name = generate_name(file.filename)
 
     metadata = {
         "featuretypes": featuretypes,
@@ -134,3 +135,35 @@ def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataF
     df = pd.read_csv(file, sep=None, engine="python", header=header, prefix="col")
     file.seek(0, SEEK_SET)
     return df
+
+
+def generate_name(filename: str, attempt: int = 1) -> str:
+    """Generates a dataset name from a given filename.
+
+    Args:
+        filename (str): source filename.
+        attempt (int): the current attempt of generating a new name.
+
+    Return:
+        str: new generated dataset name.
+    """
+    # normalize filename to ASCII characters
+    # replace spaces by dashes
+    name = normalize('NFKD', filename) \
+        .encode('ASCII', 'ignore') \
+        .replace(b' ', b'-') \
+        .decode()
+
+    if attempt > 1:
+        # adds a suffix '-NUMBER' to filename
+        name, extension = splitext(name)
+        name = f"{name}-{attempt}{extension}"
+
+    try:
+        # check if final_name is already in use
+        stat_dataset(name)
+    except FileNotFoundError:
+        return name
+
+    # if it is already in use,
+    return generate_name(filename, attempt + 1)
