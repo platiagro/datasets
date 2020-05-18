@@ -212,7 +212,7 @@ class TestApi(TestCase):
 
     def test_get_dataset(self):
         with app.test_client() as c:
-            rv = c.get("/datasets/iris.data")
+            rv = c.get("/datasets/UNK")
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
@@ -245,7 +245,7 @@ class TestApi(TestCase):
 
     def test_list_columns(self):
         with app.test_client() as c:
-            rv = c.get("/datasets/iris.data/columns")
+            rv = c.get("/datasets/UNK/columns")
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
@@ -271,7 +271,7 @@ class TestApi(TestCase):
 
     def test_update_column(self):
         with app.test_client() as c:
-            rv = c.patch("/datasets/iris.data/columns/col0", json={
+            rv = c.patch("/datasets/UNK/columns/col0", json={
                 "featuretype": "Numerical"
             })
             result = rv.get_json()

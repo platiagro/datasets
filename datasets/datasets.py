@@ -2,7 +2,7 @@
 from io import StringIO
 from os import SEEK_SET
 from typing import Any, Dict, IO, List
-from uuid import uuid4
+from unicodedata import normalize
 
 import pandas as pd
 import platiagro
@@ -62,8 +62,8 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     else:
         featuretypes = infer_featuretypes(df)
 
-    # generates an uuid for the dataset
-    name = str(uuid4())
+    # generate a dataset name from filename
+    name = generate_name(file.filename)
 
     metadata = {
         "featuretypes": featuretypes,
@@ -134,3 +134,29 @@ def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataF
     df = pd.read_csv(file, sep=None, engine="python", header=header, prefix="col")
     file.seek(0, SEEK_SET)
     return df
+
+
+def generate_name(name: str, attempt: int = 1) -> str:
+    """Generates a dataset name from a given name.
+
+    Args:
+        name (str): source name (usually a filename).
+        attempt (int): the current attempt of generating a new name.
+
+    Return:
+        str: new generated name.
+    """
+    # normalize filename to ASCII characters
+    # replace spaces by dashes
+    name = normalize('NFKD', name) \
+        .encode('ASCII', 'ignore') \
+        .replace(b' ', b'-') \
+        .decode()
+    try:
+        # check if name is already in use
+        stat_dataset(name)
+    except FileNotFoundError:
+        return name
+
+    # if it is already in use, adds a suffix '-NUMBER'
+    return generate_name(f"{name}-{attempt}", attempt + 1)
