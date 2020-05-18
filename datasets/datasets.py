@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from io import StringIO
 from os import SEEK_SET
+from os.path import splitext
 from typing import Any, Dict, IO, List
 from unicodedata import normalize
 
@@ -136,27 +137,33 @@ def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataF
     return df
 
 
-def generate_name(name: str, attempt: int = 1) -> str:
-    """Generates a dataset name from a given name.
+def generate_name(filename: str, attempt: int = 1) -> str:
+    """Generates a dataset name from a given filename.
 
     Args:
-        name (str): source name (usually a filename).
+        filename (str): source filename.
         attempt (int): the current attempt of generating a new name.
 
     Return:
-        str: new generated name.
+        str: new generated dataset name.
     """
     # normalize filename to ASCII characters
     # replace spaces by dashes
-    name = normalize('NFKD', name) \
+    name = normalize('NFKD', filename) \
         .encode('ASCII', 'ignore') \
         .replace(b' ', b'-') \
         .decode()
+
+    if attempt > 1:
+        # adds a suffix '-NUMBER' to filename
+        name, extension = splitext(name)
+        name = f"{name}-{attempt}{extension}"
+
     try:
-        # check if name is already in use
+        # check if final_name is already in use
         stat_dataset(name)
     except FileNotFoundError:
         return name
 
-    # if it is already in use, adds a suffix '-NUMBER'
-    return generate_name(f"{name}-{attempt}", attempt + 1)
+    # if it is already in use,
+    return generate_name(filename, attempt + 1)
