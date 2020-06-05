@@ -14,5 +14,9 @@
     {
         "name": "titanic",
         "file": "/samples/titanic.csv"
+    },
+    {
+        "name": "eucalyptus",
+        "file": "/samples/eucalyptus.csv"
     }
 ]
