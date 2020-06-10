@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from io import StringIO
+from io import BytesIO
 from os import SEEK_SET
 from os.path import splitext
 from typing import Any, Dict, IO, List
@@ -8,6 +8,7 @@ from unicodedata import normalize
 import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
+from pandas.io.common import infer_compression
 from platiagro import save_dataset, stat_dataset
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
@@ -45,8 +46,17 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     if file.filename == "":
         raise BadRequest("No selected file")
 
-    # reads file into a DataFrame
-    df = read_into_dataframe(file)
+    # generate a dataset name from filename
+    name = generate_name(file.filename)
+
+    try:
+        # reads file into a DataFrame
+        df = read_into_dataframe(file, file.filename)
+    except Exception as e:
+        # if read fails, then uploads raw file
+        save_dataset(name, file)
+        return {"name": name, "filename": file.filename}
+
     columns = df.columns.values.tolist()
 
     # checks if the post request has the 'featuretypes' part
@@ -62,9 +72,6 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
             raise BadRequest("featuretypes must be the same length as the DataFrame columns")
     else:
         featuretypes = infer_featuretypes(df)
-
-    # generate a dataset name from filename
-    name = generate_name(file.filename)
 
     metadata = {
         "featuretypes": featuretypes,
@@ -103,13 +110,14 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
+def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
     """Reads a file into a DataFrame.
 
     Infers the file encoding and whether a header column exists
 
     Args:
         file (IO): file buffer.
+        filename (str): filename. Used to infer compression.
         nrows (int, optional): number of rows to peek. Default: 100.
         th (float, optional): threshold.
 
@@ -124,16 +132,45 @@ def read_into_dataframe(file: IO, nrows: int = 100, th: float = 0.9) -> pd.DataF
     detector.close()
     encoding = detector.result.get("encoding")
 
+    compression = infer_compression(filename, "infer")
+
     file.seek(0, SEEK_SET)
-    file = StringIO(file.read().decode(encoding))
-    df1 = pd.read_csv(file, sep=None, engine="python", header="infer", nrows=nrows)
-    file.seek(0, SEEK_SET)
-    df2 = pd.read_csv(file, sep=None, engine="python", header=None, nrows=nrows)
-    file.seek(0, SEEK_SET)
+    contents = file.read()
+    with BytesIO(contents) as file:
+        df1 = pd.read_csv(
+            file,
+            encoding=encoding,
+            compression=compression,
+            sep=None,
+            engine="python",
+            header="infer",
+            nrows=nrows,
+        )
+
+    with BytesIO(contents) as file:
+        df2 = pd.read_csv(
+            file,
+            encoding=encoding,
+            compression=compression,
+            sep=None,
+            engine="python",
+            header=None,
+            nrows=nrows,
+        )
+
     sim = (df1.dtypes.values == df2.dtypes.values).mean()
     header = "infer" if sim < th else None
-    df = pd.read_csv(file, sep=None, engine="python", header=header, prefix="col")
-    file.seek(0, SEEK_SET)
+
+    with BytesIO(contents) as file:
+        df = pd.read_csv(
+            file,
+            encoding=encoding,
+            compression=compression,
+            sep=None,
+            engine="python",
+            header=header,
+            prefix="col",
+        )
     return df
 
 
