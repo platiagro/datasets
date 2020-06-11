@@ -100,12 +100,15 @@ def get_dataset(name: str) -> Dict[str, Any]:
     try:
         metadata = stat_dataset(name)
 
-        columns = metadata["columns"]
-        featuretypes = metadata["featuretypes"]
         filename = metadata.get("original-filename")
 
-        columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-        return {"name": name, "columns": columns, "filename": filename}
+        if "columns" in metadata and "featuretypes" in metadata:
+            columns = metadata["columns"]
+            featuretypes = metadata["featuretypes"]
+            columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+            return {"name": name, "columns": columns, "filename": filename}
+
+        return {"name": name, "filename": filename}
     except FileNotFoundError:
         raise NotFound("The specified dataset does not exist")
 

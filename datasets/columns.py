@@ -21,8 +21,8 @@ def list_columns(dataset: str) -> List[Dict[str, str]]:
     try:
         metadata = stat_dataset(dataset)
 
-        columns = metadata["columns"]
-        featuretypes = metadata["featuretypes"]
+        columns = metadata.get("columns", [])
+        featuretypes = metadata.get("featuretypes", [])
 
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return columns
@@ -47,6 +47,10 @@ def update_column(dataset: str, column: str, featuretype: str) -> Dict[str, str]
     """
     try:
         metadata = stat_dataset(dataset)
+
+        if "columns" not in metadata or "featuretypes" not in metadata:
+            raise NotFound("The specified column does not exist")
+
         columns = metadata["columns"]
 
         if column not in columns:
