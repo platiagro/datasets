@@ -328,3 +328,16 @@ class TestApi(TestCase):
             }
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+            rv = c.post("/datasets", data={
+                "file": self.gif_file(),
+            })
+            name = rv.get_json().get("name")
+
+            rv = c.patch(f"/datasets/{name}/columns/unk", json={
+                "featuretype": "Numerical"
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified column does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
