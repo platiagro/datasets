@@ -5,3 +5,5 @@ Flask-Cors==3.0.8
 platiagro @ git+https://github.com/platiagro/sdk.git@master
 # Character Encoding Detector
 chardet==3.0.4
+# Data analysis and manipulation tool (required for infer_compression)
+pandas>=1.0
