@@ -1,22 +1,22 @@
 [
     {
-        "name": "iris",
+        "name": "iris.csv",
         "file": "/samples/iris.csv"
     },
     {
-        "name": "boston",
+        "name": "boston.csv",
         "file": "/samples/boston.csv"
     },
     {
-        "name": "imdb",
+        "name": "imdb.csv",
         "file": "/samples/imdb.csv"
     },
     {
-        "name": "titanic",
+        "name": "titanic.csv",
         "file": "/samples/titanic.csv"
     },
     {
-        "name": "eucalyptus",
+        "name": "eucalyptus.csv",
         "file": "/samples/eucalyptus.csv"
     }
 ]
