@@ -54,6 +54,7 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
         df = read_into_dataframe(file, file.filename)
     except Exception as e:
         # if read fails, then uploads raw file
+        print(e)
         save_dataset(name, file)
         return {"name": name, "filename": file.filename}
 
@@ -163,6 +164,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: floa
 
     sim = (df1.dtypes.values == df2.dtypes.values).mean()
     header = "infer" if sim < th else None
+    prefix = None if header else "col"
 
     with BytesIO(contents) as file:
         df = pd.read_csv(
@@ -172,7 +174,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: floa
             sep=None,
             engine="python",
             header=header,
-            prefix="col",
+            prefix=prefix,
         )
     return df
 
