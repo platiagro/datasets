@@ -7,7 +7,6 @@ from unicodedata import normalize
 
 import pandas as pd
 import platiagro
-import numpy as np
 from chardet.universaldetector import UniversalDetector
 from pandas.io.common import infer_compression
 from platiagro import save_dataset, stat_dataset
@@ -114,7 +113,7 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100) -> pd.DataFrame:
+def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_characters: int = 30) -> pd.DataFrame:
     """Reads a file into a DataFrame.
 
     Infers the file encoding and whether a header column exists
@@ -123,6 +122,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100) -> pd.Da
         file (IO): file buffer.
         filename (str): filename. Used to infer compression.
         nrows (int, optional): number of rows to peek. Default: 100.
+        max_characters (int, optional): max characters a column name can have to be distinguished from a real text value
 
     Returns:
         A pandas.DataFrame.
@@ -156,7 +156,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100) -> pd.Da
     #Check if all columns are strins
     column_names_checker = all([type(item) == str for item in df0_cols])
     if column_names_checker:
-        column_names_checker = all([len(item) < 50 for item in df0_cols]) 
+        column_names_checker = all([len(item) < max_characters for item in df0_cols]) 
     
  
     #Check if all columns cant be turned to floats
