@@ -163,7 +163,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
            item = float(item)
            conversion_checker = False
            break
-        except:
+        except ValueError:
             pass
             
 
