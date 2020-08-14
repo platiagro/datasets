@@ -54,7 +54,7 @@ class TestApi(TestCase):
         ).encode("windows-1252")), "titanic.csv",)
 
     def test_parse_args(self):
-    print("--------->test_parse_args<---------")
+        print("--------->test_parse_args<---------")
         parser = parse_args([])
         
         print('Expected: ', 8080)
@@ -73,7 +73,7 @@ class TestApi(TestCase):
         self.assertTrue(parser.enable_cors)
 
     def test_ping(self):
-    print("--------->test_ping<---------")
+        print("--------->test_ping<---------")
         with app.test_client() as c:
             rv = c.get("/")
             result = rv.get_data(as_text=True)
@@ -84,7 +84,7 @@ class TestApi(TestCase):
             self.assertEqual(result, expected)
 
     def test_list_datasets(self):
-    print("--------->test_list_datasets<---------")
+        print("--------->test_list_datasets<---------")
         with app.test_client() as c:
             rv = c.get("/datasets")
             result = rv.get_json()
@@ -94,7 +94,7 @@ class TestApi(TestCase):
             self.assertIsInstance(result, list)
 
     def test_create_dataset(self):
-    print("--------->test_create_dataset<---------")
+        print("--------->test_create_dataset<---------")
         with app.test_client() as c:
             rv = c.post("/datasets", data={})
             result = rv.get_json()
@@ -279,7 +279,7 @@ class TestApi(TestCase):
             self.assertEqual(rv.status_code, 200)
 
     def test_get_dataset(self):
-    print("--------->test_get_dataset<---------")
+        print("--------->test_get_dataset<---------")
         with app.test_client() as c:
             rv = c.get("/datasets/UNK")
             result = rv.get_json()
@@ -319,7 +319,7 @@ class TestApi(TestCase):
             self.assertEqual(rv.status_code, 200)
 
     def test_list_columns(self):
-    print("--------->test_list_columns<---------")
+        print("--------->test_list_columns<---------")
         with app.test_client() as c:
             rv = c.get("/datasets/UNK/columns")
 
@@ -354,7 +354,7 @@ class TestApi(TestCase):
             self.assertEqual(rv.status_code, 200)
 
     def test_update_column(self):
-    print("--------->test_update_column<---------")
+        print("--------->test_update_column<---------")
         with app.test_client() as c:
             rv = c.patch("/datasets/UNK/columns/col0", json={
                 "featuretype": "Numerical"
