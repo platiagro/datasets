@@ -156,13 +156,15 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
         column_names_checker = all([len(item) < max_characters for item in df0_cols]) 
     
  
-    #Check if all columns cant be turned to floats
-    try:
-        test = [float(item) for item in df0_cols]
-        conversion_checker = False
-    except ValueError:
-        conversion_checker = True
-        
+    #Check if any column can be turned to float
+    conversion_checker= True
+    for item in df0_cols:
+        try:
+           item = float(item)
+           conversion_checker = False
+           break
+        except:
+            pass
 
     #Prefix and header 
     final_checker = True if (column_names_checker and conversion_checker) else False
