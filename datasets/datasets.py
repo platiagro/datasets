@@ -113,14 +113,14 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: float = 0.9) -> pd.DataFrame:
+def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_characters: int = 30) -> pd.DataFrame:
     """Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
     Args:
         file (IO): file buffer.
         filename (str): filename. Used to infer compression.
         nrows (int, optional): number of rows to peek. Default: 100.
-        th (float, optional): threshold.
+        max_characters (int, optional): max characters a column name can have to be distinguished from a real text value
     Returns:
         A pandas.DataFrame.
     """
@@ -136,8 +136,9 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: floa
 
     file.seek(0, SEEK_SET)
     contents = file.read()
+
     with BytesIO(contents) as file:
-        df1 = pd.read_csv(
+        df0 = pd.read_csv(
             file,
             encoding=encoding,
             compression=compression,
@@ -146,20 +147,26 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: floa
             header="infer",
             nrows=nrows,
         )
+        
+    df0_cols  = list(df0.columns)
+    
+    #Check if all columns are strins
+    column_names_checker = all([type(item) == str for item in df0_cols])
+    if column_names_checker:
+        column_names_checker = all([len(item) < max_characters for item in df0_cols]) 
+    
+ 
+    #Check if all columns cant be turned to floats
+    try:
+        test = [float(item) for item in df0_cols]
+        conversion_checker = False
+    except ValueError:
+        conversion_checker = True
+        
 
-    with BytesIO(contents) as file:
-        df2 = pd.read_csv(
-            file,
-            encoding=encoding,
-            compression=compression,
-            sep=None,
-            engine="python",
-            header=None,
-            nrows=nrows,
-        )
-
-    sim = (df1.dtypes.values == df2.dtypes.values).mean()
-    header = "infer" if sim < th else None
+    #Prefix and header 
+    final_checker = True if (column_names_checker and conversion_checker) else False
+    header = "infer"  if final_checker else None
     prefix = None if header else "col"
 
     with BytesIO(contents) as file:
@@ -172,8 +179,10 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100, th: floa
             header=header,
             prefix=prefix,
         )
-    
     return df
+
+
+
 
 
 def generate_name(filename: str, attempt: int = 1) -> str:
