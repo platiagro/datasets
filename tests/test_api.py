@@ -66,10 +66,10 @@ class TestApi(TestCase):
 
         parser = parse_args(["--enable-cors", "--port", "3000"])
         print('Expected: ', 3000)
-            print('Result: ', parser.port)
+        print('Result: ', parser.port)
         self.assertEqual(parser.port, 3000)
         print('Expected: ', 'true')
-            print('Result: ', parser.enable_cors)
+        print('Result: ', parser.enable_cors)
         self.assertTrue(parser.enable_cors)
 
     def test_ping(self):
