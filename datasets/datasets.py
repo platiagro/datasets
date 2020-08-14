@@ -113,7 +113,7 @@ def get_dataset(name: str) -> Dict[str, Any]:
         raise NotFound("The specified dataset does not exist")
 
 
-def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_characters: int = 30) -> pd.DataFrame:
+def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_characters: int = 50) -> pd.DataFrame:
     """Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
     Args:
@@ -150,7 +150,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
         
     df0_cols  = list(df0.columns)
     
-    #Check if all columns are strins
+    #Check if all columns are strins and short strings(text values tend to be long)
     column_names_checker = all([type(item) == str for item in df0_cols])
     if column_names_checker:
         column_names_checker = all([len(item) < max_characters for item in df0_cols]) 
@@ -165,6 +165,7 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
            break
         except:
             pass
+            
 
     #Prefix and header 
     final_checker = True if (column_names_checker and conversion_checker) else False
