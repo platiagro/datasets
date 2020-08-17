@@ -52,8 +52,9 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     try:
         # reads file into a DataFrame
         df = read_into_dataframe(file, file.filename)
-    except Exception as e:
+    except Exception:
         # if read fails, then uploads raw file
+        file.seek(0, SEEK_SET)
         save_dataset(name, file)
         return {"name": name, "filename": file.filename}
 
