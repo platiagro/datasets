@@ -57,7 +57,6 @@ class TestApi(TestCase):
         parser = parse_args([])
         self.assertEqual(parser.port, 8080)
         self.assertFalse(parser.enable_cors)
-
         parser = parse_args(["--enable-cors", "--port", "3000"])
         self.assertEqual(parser.port, 3000)
         self.assertTrue(parser.enable_cors)
@@ -82,10 +81,9 @@ class TestApi(TestCase):
             expected = {"message": "No file part"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
-
             rv = c.post("/datasets", data={"file": (BytesIO(), "")})
             result = rv.get_json()
-            expected = {"message": "No selected file"}
+            expected = {"message": "No selected file"}            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -101,6 +99,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "message": "featuretype must be one of DateTime, Numerical, Categorical"}
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -111,6 +110,8 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "message": "featuretypes must be the same length as the DataFrame columns"}
+                
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -133,6 +134,7 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -163,6 +165,7 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -191,6 +194,7 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -212,6 +216,7 @@ class TestApi(TestCase):
             }
             self.assertIn("name", result)
             del result["name"]
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -224,6 +229,7 @@ class TestApi(TestCase):
             }
             self.assertIn("name", result)
             del result["name"]
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -232,6 +238,7 @@ class TestApi(TestCase):
             rv = c.get("/datasets/UNK")
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -257,14 +264,17 @@ class TestApi(TestCase):
             # we assert it exists, but we don't check its value
             self.assertIn("name", result)
             del result["name"]
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
     def test_list_columns(self):
         with app.test_client() as c:
             rv = c.get("/datasets/UNK/columns")
+
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -283,6 +293,7 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ]
+
             self.assertListEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -293,6 +304,7 @@ class TestApi(TestCase):
             })
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
+            
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -306,6 +318,7 @@ class TestApi(TestCase):
             })
             result = rv.get_json()
             expected = {"message": "The specified column does not exist"}
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -315,6 +328,7 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "message": "featuretype must be one of DateTime, Numerical, Categorical"}
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -326,6 +340,7 @@ class TestApi(TestCase):
                 "name": "col0",
                 "featuretype": "Numerical"
             }
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -337,7 +352,9 @@ class TestApi(TestCase):
             rv = c.patch(f"/datasets/{name}/columns/unk", json={
                 "featuretype": "Numerical"
             })
+
             result = rv.get_json()
             expected = {"message": "The specified column does not exist"}
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
