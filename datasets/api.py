@@ -8,7 +8,7 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .columns import list_columns, update_column
-from .datasets import list_datasets, create_dataset, get_dataset
+from .datasets import list_datasets, create_dataset, get_dataset, patch_dataset
 from .samples import init_datasets
 
 app = Flask(__name__)
@@ -36,6 +36,12 @@ def handle_post_datasets():
 def handle_get_dataset(name):
     """Handles GET requests to /datasets/<name>."""
     return jsonify(get_dataset(name))
+
+
+@app.route("/datasets/<name>", methods=["PATCH"])
+def handle_patch_dataset(name):
+    """Handles PATCH requests to /datasets/<name>."""
+    return jsonify(patch_dataset(name, request.files))
 
 
 @app.route("/datasets/<dataset>/columns", methods=["GET"])
