@@ -358,3 +358,22 @@ class TestApi(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
+
+    def test_get_dataset_featuretypes(self):
+        with app.test_client() as c:
+            rv = c.get("/datasets/UNK/featuretypes")
+            result = rv.get_json()
+            expected = {"message": "The specified dataset does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.post("/datasets", data={
+                "file": self.iris_file(),
+            })
+            name = rv.get_json().get("name")
+
+            rv = c.get(f"/datasets/{name}/featuretypes")
+            result = rv.get_data()
+            expected = b'DateTime\nNumerical\nNumerical\nNumerical\nNumerical\nCategorical'
+            self.assertEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)

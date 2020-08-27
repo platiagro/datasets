@@ -110,6 +110,26 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /datasets/{name}/featuretypes:
+    get:
+      summary: "Get the dataset feature types."
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Featuretypes"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   schemas:
     Dataset:
@@ -189,6 +209,14 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Columns"
+    Featuretypes:
+      description: ""
+      content:
+        text/plain:
+          schema:
+            type: string
+            format: binary
+            example: Numerical\nNumerical\nNumerical\nNumerical\nCategorical
     Message:
       description: ""
       content:
