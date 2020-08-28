@@ -3,12 +3,12 @@
 import argparse
 import sys
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .columns import list_columns, update_column
-from .datasets import list_datasets, create_dataset, get_dataset
+from .datasets import list_datasets, create_dataset, get_dataset, get_featuretypes
 from .samples import init_datasets
 
 app = Flask(__name__)
@@ -49,6 +49,16 @@ def handle_patch_column(dataset, column):
     """Handles PATCH requests to /datasets/<dataset>/columns/<column>."""
     featuretype = request.get_json().get("featuretype")
     return jsonify(update_column(dataset, column, featuretype))
+
+
+@app.route("/datasets/<dataset>/featuretypes", methods=["GET"])
+def handle_get_featuretypes(dataset):
+    """Handles GET requests to "/datasets/<dataset>/featuretypes."""
+    featuretypes = get_featuretypes(dataset)
+    response = make_response(featuretypes)
+    response.headers.set('Content-Type', 'text/plain')
+    response.headers.set('Content-Disposition', 'attachment', filename='featuretypes.txt')
+    return response
 
 
 @app.errorhandler(BadRequest)
