@@ -177,7 +177,7 @@ def read_into_dataframe(file: IO,
 
     df0_cols = list(df0.columns)
 
-    # Check if all columns are strins and short strings(text values tend to be long)
+    # Check if all columns are strings and short strings(text values tend to be long)
     column_names_checker = all([type(item) == str for item in df0_cols])
     if column_names_checker:
         column_names_checker = all([len(item) < max_characters for item in df0_cols])
