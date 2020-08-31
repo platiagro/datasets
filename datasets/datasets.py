@@ -240,3 +240,22 @@ def generate_name(filename: str, attempt: int = 1) -> str:
 
     # if it is already in use,
     return generate_name(filename, attempt + 1)
+
+
+def get_featuretypes(name: str) -> bytes:
+    """Get the dataset featuretypes.
+    Args:
+         name (str): the dataset name to look for in our object storage.
+    Returns:
+        The dataset featuretypes encoded
+    Raises:
+        NotFound: when the dataset does not exist
+    """
+    try:
+        metadata = stat_dataset(name)
+    except FileNotFoundError:
+        raise NotFound("The specified dataset does not exist")
+
+    metadata_featuretypes = metadata.get("featuretypes")
+    featuretypes = "\n".join(metadata_featuretypes)
+    return featuretypes.encode()

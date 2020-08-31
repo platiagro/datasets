@@ -325,6 +325,10 @@ class TestApi(TestCase):
             rv = c.patch("/datasets/UNK", data={
                 "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
             })
+
+    def test_get_dataset_featuretypes(self):
+        with app.test_client() as c:
+            rv = c.get("/datasets/UNK/featuretypes")
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
             self.assertDictEqual(expected, result)
@@ -375,4 +379,9 @@ class TestApi(TestCase):
                 "name": name,
             }
             self.assertDictEqual(expected, result)
+
+            rv = c.get(f"/datasets/{name}/featuretypes")
+            result = rv.get_data()
+            expected = b'DateTime\nNumerical\nNumerical\nNumerical\nNumerical\nCategorical'
+            self.assertEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
