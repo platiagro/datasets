@@ -13,6 +13,8 @@ from platiagro import save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
+DATASET_NOT_FOUND_ERROR = "The specified dataset does not exist"
+
 
 def list_datasets() -> List[Dict[str, Any]]:
     """Lists all datasets from our object storage.
@@ -98,7 +100,7 @@ def get_dataset(name: str) -> Dict[str, Any]:
 
         return {"name": name, "filename": filename}
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
 
 
 def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
@@ -118,7 +120,7 @@ def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
     try:
         metadata = stat_dataset(name)
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
 
     try:
         ftype_file = files["featuretypes"]
@@ -254,7 +256,7 @@ def get_featuretypes(name: str) -> bytes:
     try:
         metadata = stat_dataset(name)
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
 
     metadata_featuretypes = metadata.get("featuretypes")
     featuretypes = "\n".join(metadata_featuretypes)
