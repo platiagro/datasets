@@ -21,16 +21,6 @@ class TestApi(TestCase):
             f"\"01/01/2003\",4.6,3.1,1.5,0.2,\"Iris-setosa\"\n"
         ).encode()), "iris.data",)
 
-    def iris_featuretypes(self):
-        return (BytesIO((
-            f"DateTime\n"
-            f"Numerical\n"
-            f"Numerical\n"
-            f"Numerical\n"
-            f"Numerical\n"
-            f"Categorical\n"
-        ).encode()), "featuretypes.txt",)
-
     def boston_file(self):
         return (BytesIO((
             f"0.00632;18;2.31;0;0.538;6.575;65.2;4.09;1;296;15.3;396.9;4.98;24\n"
@@ -83,35 +73,7 @@ class TestApi(TestCase):
             self.assertEqual(rv.status_code, 400)
             rv = c.post("/datasets", data={"file": (BytesIO(), "")})
             result = rv.get_json()
-            expected = {"message": "No selected file"}            
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post("/datasets", data={
-                "file": self.iris_file(),
-                "featuretypes": (BytesIO(b"date\n" +
-                                         b"float\n" +
-                                         b"float\n" +
-                                         b"float\n" +
-                                         b"float\n" +
-                                         b"string"), "featuretypes.txt"),
-            })
-            result = rv.get_json()
-            expected = {
-                "message": "featuretype must be one of DateTime, Numerical, Categorical"}
-
-            self.assertDictEqual(expected, result)
-            self.assertEqual(rv.status_code, 400)
-
-            rv = c.post("/datasets", data={
-                "file": self.iris_file(),
-                "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
-            })
-            result = rv.get_json()
-            expected = {
-                "message": "featuretypes must be the same length as the DataFrame columns"}
-                
-
+            expected = {"message": "No selected file"}
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 400)
 
@@ -134,7 +96,7 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -194,13 +156,12 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
             rv = c.post("/datasets", data={
                 "file": self.iris_file(),
-                "featuretypes": self.iris_featuretypes(),
             })
             result = rv.get_json()
             expected = {
@@ -216,7 +177,7 @@ class TestApi(TestCase):
             }
             self.assertIn("name", result)
             del result["name"]
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
@@ -238,7 +199,7 @@ class TestApi(TestCase):
             rv = c.get("/datasets/UNK")
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -274,7 +235,7 @@ class TestApi(TestCase):
 
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -304,7 +265,7 @@ class TestApi(TestCase):
             })
             result = rv.get_json()
             expected = {"message": "The specified dataset does not exist"}
-            
+
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
 
@@ -358,6 +319,63 @@ class TestApi(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 404)
+
+    def test_patch_dataset(self):
+        with app.test_client() as c:
+            rv = c.patch("/datasets/UNK", data={
+                "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {"message": "The specified dataset does not exist"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
+
+            rv = c.post("/datasets", data={
+                "file": self.iris_file(),
+            })
+            name = rv.get_json().get("name")
+
+            rv = c.patch(f"/datasets/{name}", data={
+                "featuretypes": (BytesIO(b"date\n" +
+                                         b"float\n" +
+                                         b"string"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {"message": "featuretype must be one of DateTime, Numerical, Categorical"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/datasets/{name}", data={
+                "featuretypes": (BytesIO(b"DateTime"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {"message": "featuretypes must be the same length as the DataFrame columns"}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
+
+            rv = c.patch(f"/datasets/{name}", data={
+                "featuretypes": (BytesIO(b"Numerical\n" +
+                                         b"Categorical\n" +
+                                         b"DateTime\n" +
+                                         b"Numerical\n" +
+                                         b"Categorical\n" +
+                                         b"DateTime"), "featuretypes.txt"),
+            })
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "Numerical"},
+                    {"name": "col1", "featuretype": "Categorical"},
+                    {"name": "col2", "featuretype": "DateTime"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Categorical"},
+                    {"name": "col5", "featuretype": "DateTime"},
+                ],
+                "filename": "iris.data",
+                "name": name,
+            }
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
 
     def test_get_dataset_featuretypes(self):
         with app.test_client() as c:

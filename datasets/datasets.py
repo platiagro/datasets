@@ -9,9 +9,11 @@ import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from pandas.io.common import infer_compression
-from platiagro import save_dataset, stat_dataset
+from platiagro import save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
+
+DATASET_NOT_FOUND_ERROR = "The specified dataset does not exist"
 
 
 def list_datasets() -> List[Dict[str, Any]]:
@@ -59,20 +61,7 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
         return {"name": name, "filename": file.filename}
 
     columns = df.columns.values.tolist()
-
-    # checks if the post request has the 'featuretypes' part
-    if "featuretypes" in files:
-        try:
-            ftype_file = files["featuretypes"]
-            featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
-            validate_featuretypes(featuretypes)
-        except ValueError as e:
-            raise BadRequest(str(e))
-
-        if len(columns) != len(featuretypes):
-            raise BadRequest("featuretypes must be the same length as the DataFrame columns")
-    else:
-        featuretypes = infer_featuretypes(df)
+    featuretypes = infer_featuretypes(df)
 
     metadata = {
         "featuretypes": featuretypes,
@@ -111,10 +100,49 @@ def get_dataset(name: str) -> Dict[str, Any]:
 
         return {"name": name, "filename": filename}
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
 
 
-def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_characters: int = 50) -> pd.DataFrame:
+def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
+    """Update the dataset metadata in our object storage.
+    Args:
+        name (str): the dataset name to look for in our object storage.
+        files (dict): file objects.
+    Returns:
+        The dataset details: name, columns, and filename.
+    Raises:
+        BadRequest: when incoming files are missing or invalid.
+        NotFound: when the dataset does not exist
+    """
+    if "featuretypes" not in files:
+        raise BadRequest("No featuretypes part")
+
+    try:
+        metadata = stat_dataset(name)
+    except FileNotFoundError:
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
+
+    try:
+        ftype_file = files["featuretypes"]
+        featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
+        validate_featuretypes(featuretypes)
+    except ValueError as e:
+        raise BadRequest(str(e))
+
+    columns = metadata["columns"]
+    if len(columns) != len(featuretypes):
+        raise BadRequest("featuretypes must be the same length as the DataFrame columns")
+
+    # uses PlatIAgro SDK to update the dataset metadata
+    metadata["featuretypes"] = featuretypes
+    update_dataset_metadata(name=name, metadata=metadata)
+    return get_dataset(name)
+
+
+def read_into_dataframe(file: IO,
+                        filename: str = "",
+                        nrows: int = 100,
+                        max_characters: int = 50) -> pd.DataFrame:
     """Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
     Args:
@@ -148,29 +176,27 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
             header="infer",
             nrows=nrows,
         )
-        
-    df0_cols  = list(df0.columns)
-    
-    #Check if all columns are strins and short strings(text values tend to be long)
+
+    df0_cols = list(df0.columns)
+
+    # Check if all columns are strings and short strings(text values tend to be long)
     column_names_checker = all([type(item) == str for item in df0_cols])
     if column_names_checker:
-        column_names_checker = all([len(item) < max_characters for item in df0_cols]) 
-    
- 
-    #Check if any column can be turned to float
-    conversion_checker= True
+        column_names_checker = all([len(item) < max_characters for item in df0_cols])
+
+    # Check if any column can be turned to float
+    conversion_checker = True
     for item in df0_cols:
         try:
-           item = float(item)
-           conversion_checker = False
-           break
+            item = float(item)
+            conversion_checker = False
+            break
         except ValueError:
             pass
-            
 
-    #Prefix and header 
+    # Prefix and header
     final_checker = True if (column_names_checker and conversion_checker) else False
-    header = "infer"  if final_checker else None
+    header = "infer" if final_checker else None
     prefix = None if header else "col"
 
     with BytesIO(contents) as file:
@@ -184,9 +210,6 @@ def read_into_dataframe(file: IO, filename: str = "", nrows: int = 100,max_chara
             prefix=prefix,
         )
     return df
-
-
-
 
 
 def generate_name(filename: str, attempt: int = 1) -> str:
@@ -233,7 +256,7 @@ def get_featuretypes(name: str) -> bytes:
     try:
         metadata = stat_dataset(name)
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise NotFound(DATASET_NOT_FOUND_ERROR)
 
     metadata_featuretypes = metadata.get("featuretypes")
     featuretypes = "\n".join(metadata_featuretypes)
