@@ -219,7 +219,12 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
+                "total": 4
             }
             # name is machine-generated
             # we assert it exists, but we don't check its value
@@ -228,6 +233,33 @@ class TestApi(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=0&page_size=2")
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
+                "filename": "iris.data",
+                "total": 4
+            }
+            del result["name"]
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=15&page_size=2")
+            result = rv.get_json()
+            expected = {"message": "The specified page does not exist"}
+
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
     def test_list_columns(self):
         with app.test_client() as c:
@@ -371,8 +403,13 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Categorical"},
                     {"name": "col5", "featuretype": "DateTime"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
                 "name": name,
+                "total": 4
             }
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)

@@ -9,9 +9,10 @@ import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from pandas.io.common import infer_compression
-from platiagro import save_dataset, stat_dataset, update_dataset_metadata
+from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
+from .utils import data_pagination
 
 DATASET_NOT_FOUND_ERROR = "The specified dataset does not exist"
 
@@ -75,7 +76,7 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     return {"name": name, "columns": columns, "filename": file.filename}
 
 
-def get_dataset(name: str) -> Dict[str, Any]:
+def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str, Any]:
     """Details a dataset from our object storage.
 
     Args:
@@ -96,7 +97,15 @@ def get_dataset(name: str) -> Dict[str, Any]:
             columns = metadata["columns"]
             featuretypes = metadata["featuretypes"]
             columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-            return {"name": name, "columns": columns, "filename": filename}
+            content = load_dataset(name=filename)
+
+            if isinstance(content, pd.DataFrame):
+                data = content.values.tolist()
+
+            if page and page_size:
+                data = data_pagination(data, page=int(page), page_size=int(page_size))
+
+            return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
 
         return {"name": name, "filename": filename}
     except FileNotFoundError:

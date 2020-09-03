@@ -54,6 +54,16 @@ paths:
           required: true
           schema:
             type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           $ref: "#/components/responses/Dataset"
@@ -165,6 +175,11 @@ components:
           items:
             oneOf:
               - $ref: "#/components/schemas/Column"
+        data:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/Data"
     Datasets:
       type: array
       items:
@@ -178,6 +193,12 @@ components:
           enum: [Numerical, Categorical, DateTime]
         name:
           type: string
+    Data:
+      type: array
+      items:
+        oneOf: 
+          - type: string
+          - type: number
     Columns:
       type: array
       items:
