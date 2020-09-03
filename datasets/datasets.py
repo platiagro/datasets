@@ -98,9 +98,7 @@ def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str,
             featuretypes = metadata["featuretypes"]
             columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
             content = load_dataset(name=filename)
-
-            if isinstance(content, pd.DataFrame):
-                data = content.values.tolist()
+            data = content.values.tolist()
 
             if page and page_size:
                 data = data_pagination(data, page=int(page), page_size=int(page_size))
