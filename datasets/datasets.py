@@ -73,7 +73,9 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     save_dataset(name, df, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-    return {"name": name, "columns": columns, "filename": file.filename}
+    content = load_dataset(name=name)
+    data = content.values.tolist()
+    return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": file.filename}
 
 
 def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str, Any]:

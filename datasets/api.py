@@ -36,8 +36,8 @@ def handle_post_datasets():
 @app.route("/datasets/<name>", methods=["GET"])
 def handle_get_dataset(name):
     """Handles GET requests to /datasets/<name>."""
-    page = request.args.get('page', None)
-    page_size = request.args.get('page_size', None)
+    page = request.args.get('page')
+    page_size = request.args.get('page_size')
     return jsonify(get_dataset(name, page, page_size))
 
 
