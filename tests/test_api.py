@@ -169,14 +169,6 @@ class TestApi(TestCase):
                     {"featuretype": "Categorical", "name": "Cabin"},
                     {"featuretype": "Categorical", "name": "Embarked"},
                 ],
-                "data": [[11, 1, 3, 'Sandström, Miss. Marguerite Rut', 'female', 4.0, 1, 1, 'PP 9549', 16.7, 'G6', 'S'],
-                         [15, 0, 3, 'Veström, Miss. Hulda Amanda Adolfina', 'female', 14.0, 0, 0, '350406', 7.8542, nan, 'S'],
-                         [29, 1, 3, 'O‘Dwyer, Miss. Ellen “Nellie”', 'female', nan, 0, 0, '330959', 7.8792, nan, 'Q'],
-                         [44, 1, 2, 'Laroche, Miss. Simonne Marie Anne Andrée', 'female', 3.0, 1, 2, 'SC/Paris 2123', 41.5792, nan, 'C'],
-                         [84, 0, 1, 'Carraú, Mr. Francisco M', 'male', 28.0, 0, 0, '113059', 47.1, nan, 'S'],
-                         [92, 0, 3, 'Andreasson, Mr. Pål Edvin', 'male', 20.0, 0, 0, '347466', 7.8542, nan, 'S'],
-                         [130, 0, 3, 'Ekström, Mr. Johan', 'male', 45.0, 0, 0, '347061', 6.975, nan, 'S'],
-                         [134, 1, 2, 'Weisz, Mrs. Leopold – Mathilde Francoise Pede', 'female', 29.0, 1, 0, '228414', 26.0, nan, 'S']],
                 "filename": "titanic.csv",
                 "total": 8,
             }
@@ -184,6 +176,11 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
+            
+            # assert that "data" exists, but we don't assert their value
+            # since there's nan values
+            self.assertIn("data", result)
+            del result["data"]
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
@@ -280,6 +277,25 @@ class TestApi(TestCase):
                 ],
                 "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
                          ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
+                "filename": "iris.data",
+                "total": 4
+            }
+            del result["name"]
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=1&page_size=3")
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+                "data": [['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
                 "total": 4
             }
