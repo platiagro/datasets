@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
 from unittest import TestCase
+import json
+
+from numpy import nan
 
 from datasets.api import app, parse_args
 
@@ -90,6 +93,11 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+                "total": 4,
                 "filename": "iris.data",
             }
             # name is machine-generated
@@ -121,6 +129,17 @@ class TestApi(TestCase):
                     {"name": "col12", "featuretype": "Numerical"},
                     {"name": "col13", "featuretype": "Numerical"},
                 ],
+                "data": [[0.00632, 18.0, 2.31, 0.0, 0.5379999999999999, 6.575, 65.2,
+                          4.09, 1.0, 296.0, 15.3, 396.9, 4.98, 24.0],
+                        [0.02731, 0.0, 7.07, 0.0, 0.469, 6.421, 78.9,
+                         4.9671, 2.0, 242.0, 17.8, 396.9, 9.14, 21.6],
+                        [0.02729, 0.0, 7.07, 0.0, 0.469, 7.185, 61.1,
+                         4.9671, 2.0, 242.0, 17.8, 392.83, 4.03, 34.7],
+                        [0.03237, 0.0, 2.18, 0.0, 0.458, 6.997999999999998, 45.8,
+                         6.0622, 3.0, 222.0, 18.7, 394.63, 2.94, 33.4],
+                        [0.06905, 0.0, 2.18, 0.0, 0.458, 7.147, 54.2,
+                         6.0622, 3.0, 222.0, 18.7, 396.9, 5.33, 36.2]],
+                "total": 5, 
                 "filename": "boston.data",
             }
             # name is machine-generated
@@ -137,25 +156,31 @@ class TestApi(TestCase):
             result = rv.get_json()
             expected = {
                 "columns": [
-                    {"name": "PassengerId", "featuretype": "Numerical"},
-                    {"name": "Survived", "featuretype": "Numerical"},
-                    {"name": "Pclass", "featuretype": "Numerical"},
-                    {"name": "Name", "featuretype": "Categorical"},
-                    {"name": "Sex", "featuretype": "Categorical"},
-                    {"name": "Age", "featuretype": "Numerical"},
-                    {"name": "SibSp", "featuretype": "Numerical"},
-                    {"name": "Parch", "featuretype": "Numerical"},
-                    {"name": "Ticket", "featuretype": "Categorical"},
-                    {"name": "Fare", "featuretype": "Numerical"},
-                    {"name": "Cabin", "featuretype": "Categorical"},
-                    {"name": "Embarked", "featuretype": "Categorical"},
+                    {"featuretype": "Numerical", "name": "PassengerId"},
+                    {"featuretype": "Numerical", "name": "Survived"},
+                    {"featuretype": "Numerical", "name": "Pclass"},
+                    {"featuretype": "Categorical", "name": "Name"},
+                    {"featuretype": "Categorical", "name": "Sex"},
+                    {"featuretype": "Numerical", "name": "Age"},
+                    {"featuretype": "Numerical", "name": "SibSp"},
+                    {"featuretype": "Numerical", "name": "Parch"},
+                    {"featuretype": "Categorical", "name": "Ticket"},
+                    {"featuretype": "Numerical", "name": "Fare"},
+                    {"featuretype": "Categorical", "name": "Cabin"},
+                    {"featuretype": "Categorical", "name": "Embarked"},
                 ],
                 "filename": "titanic.csv",
+                "total": 8,
             }
             # name is machine-generated
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
+            
+            # assert that "data" exists, but we don't assert their value
+            # since there's nan values
+            self.assertIn("data", result)
+            del result["data"]
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
@@ -173,7 +198,12 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
+                "total": 4
             }
             self.assertIn("name", result)
             del result["name"]
@@ -219,7 +249,12 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
+                "total": 4
             }
             # name is machine-generated
             # we assert it exists, but we don't check its value
@@ -228,6 +263,52 @@ class TestApi(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=0&page_size=2")
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
+                "filename": "iris.data",
+                "total": 4
+            }
+            del result["name"]
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=1&page_size=3")
+            result = rv.get_json()
+            expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+                "data": [['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+                "filename": "iris.data",
+                "total": 4
+            }
+            del result["name"]
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 200)
+
+            rv = c.get(f"/datasets/{name}?page=15&page_size=2")
+            result = rv.get_json()
+            expected = {"message": "The specified page does not exist"}
+
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 404)
 
     def test_list_columns(self):
         with app.test_client() as c:
@@ -371,8 +452,13 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Categorical"},
                     {"name": "col5", "featuretype": "DateTime"},
                 ],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
                 "name": name,
+                "total": 4
             }
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
