@@ -100,7 +100,7 @@ def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str,
             columns = metadata["columns"]
             featuretypes = metadata["featuretypes"]
             columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-            content = load_dataset(name=filename)
+            content = load_dataset(name)
             content = content.where(pd.notnull(content), None)
             data = content.values.tolist()
 
