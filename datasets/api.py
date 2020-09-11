@@ -8,9 +8,10 @@ from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
 from .columns import list_columns, update_column
-from .datasets import list_datasets, create_dataset, get_dataset, get_featuretypes, \
-    patch_dataset
+from .datasets import list_datasets, create_dataset, create_google_drive_dataset, \
+    get_dataset, get_featuretypes, patch_dataset
 from .samples import init_datasets
+from .utils import to_snake_case
 
 app = Flask(__name__)
 
@@ -30,6 +31,13 @@ def handle_list_datasets():
 @app.route("/datasets", methods=["POST"])
 def handle_post_datasets():
     """Handles POST requests to /datasets."""
+    kwargs = None
+    if request.data:
+        kwargs = request.get_json(force=True)
+        kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
+
+    if kwargs:
+        return jsonify(create_google_drive_dataset(**kwargs))
     return jsonify(create_dataset(request.files))
 
 
