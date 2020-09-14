@@ -214,6 +214,27 @@ components:
               file:
                 type: string
                 format: binary
+        application/json:
+          schema:
+            type: object
+            properties:
+              gfile:
+                 type: object
+                 properties:
+                  clientId:
+                    type: string
+                  clientSecret:
+                    type: string
+                  id:
+                    type: string
+                  mimeType:
+                    type: string
+                    example: text/csv
+                  name:
+                    type: string
+                    example: iris.csv
+                  token:
+                    type: string
     Column:
       content:
         application/json:
