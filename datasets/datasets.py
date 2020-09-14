@@ -58,7 +58,7 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     except Exception:
         # if read fails, then uploads raw file
         file.seek(0, SEEK_SET)
-        save_dataset(name, file)
+        save_dataset(name, file, metadata={"original-filename": file.filename})
         return {"name": name, "filename": file.filename}
 
     columns = df.columns.values.tolist()
