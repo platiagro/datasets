@@ -139,7 +139,7 @@ class TestApi(TestCase):
                          6.0622, 3.0, 222.0, 18.7, 394.63, 2.94, 33.4],
                         [0.06905, 0.0, 2.18, 0.0, 0.458, 7.147, 54.2,
                          6.0622, 3.0, 222.0, 18.7, 396.9, 5.33, 36.2]],
-                "total": 5, 
+                "total": 5,
                 "filename": "boston.data",
             }
             # name is machine-generated
@@ -176,7 +176,7 @@ class TestApi(TestCase):
             # we assert it exists, but we don't assert their values
             self.assertIn("name", result)
             del result["name"]
-            
+
             # assert that "data" exists, but we don't assert their value
             # since there's nan values
             self.assertIn("data", result)
@@ -223,6 +223,22 @@ class TestApi(TestCase):
 
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
+
+            # test google file with invalid token
+            rv = c.post("/datasets", json={
+                "gfile": {
+                    "clientId": "clientId",
+                    "clientSecret": "clientSecret",
+                    "id": "id",
+                    "mimeType": "text/csv",
+                    "name": "iris.csv",
+                    "token": "123"
+                }
+            })
+            result = rv.get_json()
+            expected = {'message': 'Invalid token: client unauthorized'}
+            self.assertDictEqual(expected, result)
+            self.assertEqual(rv.status_code, 400)
 
     def test_get_dataset(self):
         with app.test_client() as c:

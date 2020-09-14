@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from io import BytesIO
 from os import SEEK_SET
 from os.path import splitext
@@ -9,7 +10,7 @@ import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import HttpError, MediaIoBaseDownload
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
@@ -118,12 +119,20 @@ def create_google_drive_dataset(gfile: Dict[str, Any]) -> Dict[str, Any]:
     fh = BytesIO()
     downloader = MediaIoBaseDownload(fh, request)
     done = False
-    while done is False:
-        status, done = downloader.next_chunk()
-        progress = int(status.progress() * 100)
-        print(f'[{file_name}] Download {progress}%.')
-    fh.filename = file_name
-    return create_dataset({'file': fh})
+    try:
+        while done is False:
+            status, done = downloader.next_chunk()
+            progress = int(status.progress() * 100)
+            print(f'[{file_name}] Download {progress}%.')
+        fh.filename = file_name
+        return create_dataset({'file': fh})
+    except client.HttpAccessTokenRefreshError:
+        raise BadRequest('Invalid token: client unauthorized')
+    except HttpError as e:
+        reason = json.loads(e.content).get('error').get('errors')[0].get('message')
+        if e.resp.status == 404:
+            raise NotFound(reason)
+        raise BadRequest(reason)
 
 
 def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str, Any]:
