@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from io import BytesIO
 from os import SEEK_SET
 from os.path import splitext
@@ -8,9 +9,12 @@ from unicodedata import normalize
 import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
+from googleapiclient.discovery import build
+from googleapiclient.http import HttpError, MediaIoBaseDownload
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
+from oauth2client import client, GOOGLE_TOKEN_URI
 from werkzeug.exceptions import BadRequest, NotFound
 from .utils import data_pagination
 
@@ -77,6 +81,56 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     content = content.where(pd.notnull(content), None)
     data = content.values.tolist()
     return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": file.filename}
+
+
+def create_google_drive_dataset(gfile: Dict[str, Any]) -> Dict[str, Any]:
+    """Download the google drive file and creates a new dataset in our object storage.
+    Args:
+        gfile (dict): google drive file.
+    Returns:
+        The dataset details: name, columns, and filename.
+    """
+    client_id = gfile['clientId']
+    client_secret = gfile['clientSecret']
+    file_id = gfile['id']
+    file_name = gfile['name']
+    mime_type = gfile['mimeType']
+    token = gfile['token']
+
+    credentials = client.OAuth2Credentials(
+        access_token=token,
+        client_id=client_id,
+        client_secret=client_secret,
+        refresh_token=token,
+        token_expiry=None,
+        token_uri=GOOGLE_TOKEN_URI,
+        user_agent=None)
+
+    service = build('drive', 'v3', credentials=credentials)
+
+    if 'google' in mime_type:
+        export_mine_type = 'text/plain'
+        if 'spreadsheet' in mime_type:
+            export_mine_type = 'text/csv'
+        request = service.files().export(fileId=file_id, mimeType=export_mine_type)
+    else:
+        request = service.files().get_media(fileId=file_id)
+
+    fh = BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    try:
+        while done is False:
+            status, done = downloader.next_chunk()
+        fh.filename = file_name
+        return create_dataset({'file': fh})
+    except client.HttpAccessTokenRefreshError:
+        raise BadRequest('Invalid token: client unauthorized')
+    except HttpError as e:
+        reason = json.loads(e.content).get('error').get('errors')[0].get('message')
+        if e.resp.status == 404:
+            raise NotFound(reason)
+        raise BadRequest(reason)
 
 
 def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str, Any]:

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import re
 from itertools import zip_longest
 from werkzeug.exceptions import NotFound
 
@@ -28,3 +30,8 @@ def data_pagination(data: list, page: int, page_size: int) -> list:
             raise NotFound("The informed page does not contain records")
     except IndexError:
         raise NotFound("The specified page does not exist")
+
+
+def to_snake_case(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
