@@ -122,8 +122,6 @@ def create_google_drive_dataset(gfile: Dict[str, Any]) -> Dict[str, Any]:
     try:
         while done is False:
             status, done = downloader.next_chunk()
-            progress = int(status.progress() * 100)
-            print(f'[{file_name}] Download {progress}%.')
         fh.filename = file_name
         return create_dataset({'file': fh})
     except client.HttpAccessTokenRefreshError:
