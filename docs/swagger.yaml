@@ -18,7 +18,7 @@ tags:
 paths:
   /datasets:
     get:
-      summary: "List all datasets."
+      summary: "List all datasets names."
       tags:
         - "Datasets"
       responses:
@@ -183,8 +183,10 @@ components:
     Datasets:
       type: array
       items:
-        oneOf:
-          - $ref: "#/components/schemas/Dataset"
+        type: object
+        properties:
+          name:
+            type: string
     Column:
       type: object
       properties:
@@ -196,7 +198,7 @@ components:
     Data:
       type: array
       items:
-        oneOf: 
+        oneOf:
           - type: string
           - type: number
     Columns:
@@ -219,8 +221,8 @@ components:
             type: object
             properties:
               gfile:
-                 type: object
-                 properties:
+                type: object
+                properties:
                   clientId:
                     type: string
                   clientSecret:
