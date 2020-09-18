@@ -280,7 +280,7 @@ class TestApi(TestCase):
             self.assertDictEqual(expected, result)
             self.assertEqual(rv.status_code, 200)
 
-            rv = c.get(f"/datasets/{name}?page=0&page_size=2")
+            rv = c.get(f"/datasets/{name}?page=1&page_size=2")
             result = rv.get_json()
             expected = {
                 "columns": [
@@ -311,7 +311,9 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
-                "data": [['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
                 "total": 4
             }
