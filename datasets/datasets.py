@@ -28,7 +28,7 @@ def list_datasets() -> List[Dict[str, Any]]:
         A list of all datasets.
     """
     datasets = platiagro.list_datasets()
-    return [get_dataset(name) for name in datasets]
+    return [{'name': name} for name in datasets]
 
 
 def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
