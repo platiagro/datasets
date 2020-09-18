@@ -9,7 +9,7 @@ def data_pagination(data: list, page: int, page_size: int) -> list:
 
     Args:
         data (list): a list of rows from dataset csv
-        page (int): requested page
+        page (int): requested page. Initial page is 1.
         page_size (int): total of items per page
 
     Raises:
@@ -18,14 +18,13 @@ def data_pagination(data: list, page: int, page_size: int) -> list:
     Returns:
         list: a list with requested page data
     """
-
     split_into_pages = list(list(zip_longest(*(iter(data),) * page_size)))
 
     try:
-        if all(split_into_pages[page]):
-            return split_into_pages[page]
-        elif split_into_pages[page]:
-            return list(filter(None, split_into_pages[page]))
+        if all(split_into_pages[page - 1]):
+            return split_into_pages[page - 1]
+        elif split_into_pages[page - 1]:
+            return list(filter(None, split_into_pages[page - 1]))
         else:
             raise NotFound("The informed page does not contain records")
     except IndexError:
