@@ -17,7 +17,7 @@ def init_datasets(config_path: str):
         for dataset in datasets:
             name = dataset["name"]
             file = dataset["file"]
-            filename = config_path.split("/")[-1]
+            filename = file.split("/")[-1]
 
             df = pd.read_csv(file, sep=None, engine="python")
             columns = df.columns.values.tolist()
