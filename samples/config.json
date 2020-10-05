@@ -18,5 +18,9 @@
     {
         "name": "eucalyptus.csv",
         "file": "/samples/eucalyptus.csv"
+    },
+    {
+        "name": "coco.zip",
+        "file": "/samples/coco.zip"
     }
 ]
