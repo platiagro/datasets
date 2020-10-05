@@ -30,13 +30,12 @@ def init_datasets(config_path: str):
                 }
             except Exception:
                 # if read/metadata inference fails, then saves raw file
-                file.seek(0, SEEK_SET)
-                data = file
                 metadata = {"original-filename": filename}
+                data = open(file, "rb")
 
             try:
                 # uses PlatIAgro SDK to save the dataset
                 # marks as read only, so users can't mess with these datasets
-                save_dataset(name, data, metadata=metadata, read_only=True)
+                    save_dataset(name, data, metadata=metadata, read_only=True)
             except PermissionError:
                 pass
