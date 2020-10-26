@@ -1,5 +1,15 @@
 FROM python:3.6-buster
 
+LABEL maintainer="fabiol@cpqd.com.br"
+
+# Stamps the commit SHA into the labels and ENV vars
+ARG BRANCH="master"
+ARG COMMIT=""
+LABEL branch=${BRANCH}
+LABEL commit=${COMMIT}
+ENV COMMIT=${COMMIT}
+ENV BRANCH=${BRANCH}
+
 COPY ./requirements.txt /app/requirements.txt
 
 RUN pip install -r /app/requirements.txt
