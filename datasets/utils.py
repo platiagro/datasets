@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 from itertools import zip_longest
+
 from werkzeug.exceptions import NotFound
 
 

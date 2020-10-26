@@ -11,12 +11,13 @@ import platiagro
 from chardet.universaldetector import UniversalDetector
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpError, MediaIoBaseDownload
+from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
-from oauth2client import client, GOOGLE_TOKEN_URI
 from werkzeug.exceptions import BadRequest, NotFound
-from .utils import data_pagination
+
+from datasets.utils import data_pagination
 
 DATASET_NOT_FOUND_ERROR = "The specified dataset does not exist"
 
