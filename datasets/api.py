@@ -7,11 +7,11 @@ from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
 
-from .columns import list_columns, update_column
-from .datasets import list_datasets, create_dataset, create_google_drive_dataset, \
+from datasets.columns import list_columns, update_column
+from datasets.datasets import list_datasets, create_dataset, create_google_drive_dataset, \
     get_dataset, get_featuretypes, patch_dataset
-from .samples import init_datasets
-from .utils import to_snake_case
+from datasets.samples import init_datasets
+from datasets.utils import to_snake_case
 
 app = Flask(__name__)
 
