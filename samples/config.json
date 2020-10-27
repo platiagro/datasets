@@ -26,11 +26,11 @@
     {
         "name": "hotel_bookings.csv",
         "file": "/samples/hotel_bookings.csv"
-    }
+    },
 	{
         "name": "ocr_dataset.zip",
         "file": "/samples/ocr_dataset.zip"
-    }
+    },
 	    {
         "name": "paracrawl_en_pt_test.xlsx",
         "file": "/samples/paracrawl_en_pt_test.xlsx"
