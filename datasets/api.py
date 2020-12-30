@@ -18,19 +18,37 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def ping():
-    """Handles GET requests to /."""
+    """
+    Handles GET requests to /.
+
+    Returns
+    -------
+    str
+    """
     return "pong"
 
 
 @app.route("/datasets", methods=["GET"])
 def handle_list_datasets():
-    """Handles GET requests to /datasets."""
+    """
+    Handles GET requests to /datasets.
+
+    Returns
+    -------
+    str
+    """
     return jsonify(list_datasets())
 
 
 @app.route("/datasets", methods=["POST"])
 def handle_post_datasets():
-    """Handles POST requests to /datasets."""
+    """
+    Handles POST requests to /datasets.
+
+    Returns
+    -------
+    str
+    """
     kwargs = None
     if request.data:
         kwargs = request.get_json(force=True)
@@ -43,34 +61,90 @@ def handle_post_datasets():
 
 @app.route("/datasets/<name>", methods=["GET"])
 def handle_get_dataset(name):
-    """Handles GET requests to /datasets/<name>."""
-    page = request.args.get('page')
-    page_size = request.args.get('page_size')
-    return jsonify(get_dataset(name, page, page_size))
+    """
+    Handles GET requests to /datasets/<name>.
+
+    Parameters
+    ----------
+    name : str
+        The dataset name.
+
+    Returns
+    -------
+    str
+    """
+    page = request.args.get('page', 1)
+    page_size = request.args.get('page_size', 10)
+
+    return jsonify(get_dataset(name=name, page=page, page_size=page_size))
 
 
 @app.route("/datasets/<name>", methods=["PATCH"])
 def handle_patch_dataset(name):
-    """Handles PATCH requests to /datasets/<name>."""
+    """
+    Handles PATCH requests to /datasets/<name>.
+
+    Parameters
+    ----------
+    name : str
+        The dataset name.
+
+    Returns
+    -------
+    str
+    """
     return jsonify(patch_dataset(name, request.files))
 
 
 @app.route("/datasets/<dataset>/columns", methods=["GET"])
 def handle_list_columns(dataset):
-    """Handles GET requests to /datasets/<dataset>/columns."""
+    """
+    Handles GET requests to /datasets/<dataset>/columns.
+
+    Parameters
+    ----------
+    dataset : str
+        The dataset to retrive columns.
+
+    Returns
+    -------
+    str
+    """
     return jsonify(list_columns(dataset))
 
 
 @app.route("/datasets/<dataset>/columns/<column>", methods=["PATCH"])
 def handle_patch_column(dataset, column):
-    """Handles PATCH requests to /datasets/<dataset>/columns/<column>."""
+    """
+    Handles PATCH requests to /datasets/<dataset>/columns/<column>.
+
+    Parameters
+    ----------
+    dataset : str
+    column : str
+        The column to be updated.
+
+    Returns
+    -------
+    str
+    """
     featuretype = request.get_json().get("featuretype")
     return jsonify(update_column(dataset, column, featuretype))
 
 
 @app.route("/datasets/<dataset>/featuretypes", methods=["GET"])
 def handle_get_featuretypes(dataset):
-    """Handles GET requests to "/datasets/<dataset>/featuretypes."""
+    """
+    Handles GET requests to "/datasets/<dataset>/featuretypes.
+
+    Parameters
+    ----------
+    dataset : str
+
+    Returns
+    -------
+    str
+    """
     featuretypes = get_featuretypes(dataset)
     response = make_response(featuretypes)
     response.headers.set('Content-Type', 'text/plain')
@@ -82,7 +156,13 @@ def handle_get_featuretypes(dataset):
 @app.errorhandler(NotFound)
 @app.errorhandler(InternalServerError)
 def handle_errors(e):
-    """Handles exceptions raised by the API."""
+    """
+    Handles exceptions raised by the API.
+
+    Returns
+    -------
+    str
+    """
     return jsonify({"message": e.description}), e.code
 
 

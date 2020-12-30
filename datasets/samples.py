@@ -6,11 +6,14 @@ from platiagro import save_dataset
 from platiagro.featuretypes import infer_featuretypes
 
 
-def init_datasets(config_path: str):
-    """Installs the datasets from a config file.
+def init_datasets(config_path):
+    """
+    Installs the datasets from a config file.
 
-    Args:
-        config_path (str): the path to the config file.
+    Parameters
+    ----------
+    config_path : str
+        The path to the config file.
     """
     with open(config_path) as f:
         datasets = load(f)
@@ -36,6 +39,6 @@ def init_datasets(config_path: str):
             try:
                 # uses PlatIAgro SDK to save the dataset
                 # marks as read only, so users can't mess with these datasets
-                    save_dataset(name, data, metadata=metadata, read_only=True)
+                save_dataset(name, data, metadata=metadata, read_only=True)
             except PermissionError:
                 pass

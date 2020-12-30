@@ -1,22 +1,30 @@
 # -*- coding: utf-8 -*-
-from typing import Dict, List
-
 from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import validate_featuretypes
 from werkzeug.exceptions import BadRequest, NotFound
 
+COLUMN_NOT_FOUND = NotFound("The specified column does not exist")
+DATASET_NOT_FOUND = NotFound("The specified dataset does not exist")
 
-def list_columns(dataset: str) -> List[Dict[str, str]]:
-    """Lists all columns from a dataset.
 
-    Args:
-        dataset (str): the dataset name.
+def list_columns(dataset):
+    """
+    Lists all columns from a dataset.
 
-    Returns:
+    Parameters
+    ----------
+    dataset : str
+        The dataset name.
+
+    Returns
+    -------
+    list
         A list of columns names and featuretypes.
 
-    Raises:
-        NotFound: when the dataset does not exist.
+    Raises
+    ------
+    NotFound
+        When the dataset does not exist.
     """
     try:
         metadata = stat_dataset(dataset)
@@ -27,34 +35,45 @@ def list_columns(dataset: str) -> List[Dict[str, str]]:
         columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
         return columns
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise DATASET_NOT_FOUND
 
 
-def update_column(dataset: str, column: str, featuretype: str) -> Dict[str, str]:
-    """Updates a column from a dataset.
+def update_column(dataset, column, featuretype):
+    """
+    Updates a column from a dataset.
 
-    Args:
-        dataset (str): the dataset name.
-        column (str): the column name.
-        featuretype (str): the feature type (Numerical, Categorical, or DateTime).
+    Paramters
+    ---------
+    dataset : str
+        The dataset name.
+    column : str
+        The column name.
+    featuretype : str
+        The feature type (Numerical, Categorical, or DateTime).
 
-    Returns:
+    Returns
+    -------
+    dict
         The column info.
 
-    Raises:
-        NotFound: when the dataset or column does not exist.
-        BadRequest: when the featuretype is invalid.
+    Raises
+    ------
+    NotFound
+        When the dataset or column does not exist.
+
+    BadRequest
+        When the featuretype is invalid.
     """
     try:
         metadata = stat_dataset(dataset)
 
         if "columns" not in metadata or "featuretypes" not in metadata:
-            raise NotFound("The specified column does not exist")
+            raise COLUMN_NOT_FOUND
 
         columns = metadata["columns"]
 
         if column not in columns:
-            raise NotFound("The specified column does not exist")
+            raise COLUMN_NOT_FOUND
 
         # sets new metadata
         index = columns.index(column)
@@ -67,7 +86,7 @@ def update_column(dataset: str, column: str, featuretype: str) -> Dict[str, str]
         # uses PlatIAgro SDK to save the dataset
         save_dataset(dataset, df, metadata=metadata)
     except FileNotFoundError:
-        raise NotFound("The specified dataset does not exist")
+        raise DATASET_NOT_FOUND
     except ValueError as e:
         raise BadRequest(str(e))
 

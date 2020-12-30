@@ -1,37 +1,56 @@
 # -*- coding: utf-8 -*-
+"""Utility functions."""
 import re
 from itertools import zip_longest
 
 from werkzeug.exceptions import NotFound
 
 
-def data_pagination(data: list, page: int, page_size: int) -> list:
-    """Pagination of a dataset data.
-
-    Args:
-        data (list): a list of rows from dataset csv
-        page (int): requested page. Initial page is 1.
-        page_size (int): total of items per page
-
-    Raises:
-        NotFound: whenever a dataset does not contain records or the requested page number
-
-    Returns:
-        list: a list with requested page data
+def data_pagination(content, page, page_size):
     """
-    split_into_pages = list(list(zip_longest(*(iter(data),) * page_size)))
+    Pagination of a dataset content.
+
+    Parameters
+    ----------
+    content : list
+    page : int
+    page_size : int
+
+    Raises
+    ------
+    NotFound
+        Whenever a dataset does not contain records or the requested page number.
+
+    Returns
+    --------
+    list
+        A list with requested page data.
+    """
+    # Splits records into `page_size` size
+    split_into_pages = list(list(zip_longest(*(iter(content),) * abs(page_size))))
 
     try:
-        if all(split_into_pages[page - 1]):
-            return split_into_pages[page - 1]
-        elif split_into_pages[page - 1]:
-            return list(filter(None, split_into_pages[page - 1]))
-        else:
-            raise NotFound("The informed page does not contain records")
+        # if the last page is not filled (has the length of page_size), `zip_longest`
+        # fills with None values. Remove these values before returning
+        paged_data = list(filter(None, split_into_pages[page-1]))
     except IndexError:
         raise NotFound("The specified page does not exist")
 
+    return paged_data
+
 
 def to_snake_case(name):
+    """
+    Convert string to snake case.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    str
+        The given string in snake case.
+    """
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
