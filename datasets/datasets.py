@@ -3,8 +3,8 @@ import json
 from io import BytesIO
 from os import SEEK_SET
 from os.path import splitext
-from typing import Any, Dict, IO, List
 from unicodedata import normalize
+from uuid import uuid4
 
 import pandas as pd
 import platiagro
@@ -19,30 +19,40 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from datasets.utils import data_pagination
 
-DATASET_NOT_FOUND_ERROR = "The specified dataset does not exist"
+NOT_FOUND = NotFound("The specified dataset does not exist")
 
 
-def list_datasets() -> List[Dict[str, Any]]:
-    """Lists all datasets from our object storage.
+def list_datasets():
+    """
+    Lists all datasets from our object storage.
 
-    Returns:
+    Returns
+    -------
+    List[Dict[str, Any]]
         A list of all datasets.
     """
     datasets = platiagro.list_datasets()
     return [{'name': name} for name in datasets]
 
 
-def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
-    """Creates a new dataset in our object storage.
+def create_dataset(files):
+    """
+    Creates a new dataset in our object storage.
 
-    Args:
-        files (dict): file objects.
+    Parameters
+    ----------
+    files : dict
+        file objects.
 
-    Returns:
+    Returns
+    -------
+    dict
         The dataset details: name, columns, and filename.
 
-    Raises:
-        BadRequest: when incoming files are missing or valid.
+    Raises
+    -------
+    BadRequest
+        When incoming files are missing or valid.
     """
     # checks if the post request has the file part
     if "file" not in files:
@@ -84,12 +94,27 @@ def create_dataset(files: Dict[str, IO]) -> Dict[str, Any]:
     return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": file.filename}
 
 
-def create_google_drive_dataset(gfile: Dict[str, Any]) -> Dict[str, Any]:
-    """Download the google drive file and creates a new dataset in our object storage.
-    Args:
-        gfile (dict): google drive file.
-    Returns:
+def create_google_drive_dataset(gfile):
+    """
+    Download the google drive file and creates a new dataset in our object storage.
+
+    Parameters
+    ----------
+    gfile : dict
+        Google Drive file.
+
+    Returns
+    -------
+    dict
         The dataset details: name, columns, and filename.
+
+    Raises
+    ------
+    BadRequest
+        When a error occurred when trying to retrive file such as: Invalid token or HTTP request.
+
+    NotFound
+        When a file was not found.
     """
     client_id = gfile['clientId']
     client_secret = gfile['clientSecret']
@@ -134,51 +159,77 @@ def create_google_drive_dataset(gfile: Dict[str, Any]) -> Dict[str, Any]:
         raise BadRequest(reason)
 
 
-def get_dataset(name: str, page: int = None, page_size: int = None) -> Dict[str, Any]:
-    """Details a dataset from our object storage.
+def get_dataset(name, page=1, page_size=10):
+    """
+    Details a dataset from our object storage.
 
-    Args:
-        name (str): the dataset name to look for in our object storage.
+    Parameters
+    ----------
+    name : str
+        The dataset name to look for in our object storage.
+    page : int or str
+        The page number. First page is 1. Default to 1.
+    page_size : int or str
+        The page size. Default value is 10.
 
-    Returns:
+    Returns
+    -------
+    dict
         The dataset details: name, columns, and filename.
 
-    Raises:
-        NotFound: when the dataset does not exist.
+    Raises
+    ------
+    NotFound
+        When the dataset does not exist.
     """
     try:
+        page, page_size = int(page), int(page_size)
         metadata = stat_dataset(name)
-
         filename = metadata.get("original-filename")
+        dataset = {"name": name, "filename": filename}
 
         if "columns" in metadata and "featuretypes" in metadata:
             columns = metadata["columns"]
             featuretypes = metadata["featuretypes"]
             columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
             content = load_dataset(name)
-            content = content.where(pd.notnull(content), None)
             data = content.values.tolist()
 
-            if page and page_size:
-                data = data_pagination(data, page=int(page), page_size=int(page_size))
+            if page_size != -1:
+                data = data_pagination(content=data, page=page, page_size=page_size)
 
-            return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
-
-        return {"name": name, "filename": filename}
+            dataset.update({"columns": columns, "data": data, "total": len(content.index)})
+        return dataset
     except FileNotFoundError:
-        raise NotFound(DATASET_NOT_FOUND_ERROR)
+        raise NOT_FOUND
+    except ValueError:
+        raise BadRequest("Invalid parameters")
 
 
-def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
-    """Update the dataset metadata in our object storage.
-    Args:
-        name (str): the dataset name to look for in our object storage.
-        files (dict): file objects.
-    Returns:
+def patch_dataset(name, files):
+    """
+    Update the dataset metadata in our object storage.
+
+    Parameters
+    ----------
+    name : str
+        The dataset name to look for in our object storage.
+
+    files : dict
+        File objects.
+
+    Returns
+    -------
+    dict
         The dataset details: name, columns, and filename.
-    Raises:
-        BadRequest: when incoming files are missing or invalid.
-        NotFound: when the dataset does not exist
+
+    Raises
+    ------
+    BadRequest
+        When incoming files are missing or invalid.
+
+    NotFound
+        When the dataset does not exist
     """
     if "featuretypes" not in files:
         raise BadRequest("No featuretypes part")
@@ -186,7 +237,7 @@ def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
     try:
         metadata = stat_dataset(name)
     except FileNotFoundError:
-        raise NotFound(DATASET_NOT_FOUND_ERROR)
+        raise NOT_FOUND
 
     try:
         ftype_file = files["featuretypes"]
@@ -205,19 +256,30 @@ def patch_dataset(name: str, files: Dict[str, IO]) -> Dict[str, Any]:
     return get_dataset(name)
 
 
-def read_into_dataframe(file: IO,
-                        filename: str = "",
-                        nrows: int = 100,
-                        max_characters: int = 50) -> pd.DataFrame:
-    """Reads a file into a DataFrame.
+def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
+    """
+    Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
-    Args:
-        file (IO): file buffer.
-        filename (str): filename. Used to infer compression.
-        nrows (int, optional): number of rows to peek. Default: 100.
-        max_characters (int, optional): max characters a column name can have to be distinguished from a real text value
-    Returns:
-        A pandas.DataFrame.
+
+    Parameters
+    ----------
+    file : IO
+        File buffer.
+    filename : str
+        Filename. Used to infer compression. Default to None.
+    nrows : int
+        Number of rows to peek. Default to 100.
+    max_characters : int
+        Max characters a column name can have to be distinguished from a real text value. Default to 50.
+
+    Returns
+    -------
+    pd.DataFrame
+        The dataframe content.
+
+    Notes
+    -----
+    If no filename is given, a hex uuid will be used as the file name.
     """
     detector = UniversalDetector()
     for line, text in enumerate(file):
@@ -226,6 +288,9 @@ def read_into_dataframe(file: IO,
             break
     detector.close()
     encoding = detector.result.get("encoding")
+
+    if filename is None:
+        filename = uuid4().hex
 
     compression = infer_compression(filename, "infer")
 
@@ -278,15 +343,20 @@ def read_into_dataframe(file: IO,
     return df
 
 
-def generate_name(filename: str, attempt: int = 1) -> str:
+def generate_name(filename, attempt=1):
     """Generates a dataset name from a given filename.
 
-    Args:
-        filename (str): source filename.
-        attempt (int): the current attempt of generating a new name.
+    Parameters
+    ----------
+    filename : str
+        Source filename.
+    attempt : int
+        The current attempt of generating a new name. Default to 1.
 
-    Return:
-        str: new generated dataset name.
+    Returns
+    -------
+    str
+        New generated dataset name.
     """
     # normalize filename to ASCII characters
     # replace spaces by dashes
@@ -310,19 +380,29 @@ def generate_name(filename: str, attempt: int = 1) -> str:
     return generate_name(filename, attempt + 1)
 
 
-def get_featuretypes(name: str) -> bytes:
-    """Get the dataset featuretypes.
-    Args:
-         name (str): the dataset name to look for in our object storage.
-    Returns:
-        The dataset featuretypes encoded
-    Raises:
-        NotFound: when the dataset does not exist
+def get_featuretypes(name):
+    """
+    Get the dataset featuretypes.
+
+    Parameters
+    ----------
+    name : str
+        The dataset name to look for in our object storage.
+
+    Returns
+    -------
+    bytes
+        The dataset featuretypes encoded.
+
+    Raises
+    ------
+    NotFound
+        When the dataset does not exist.
     """
     try:
         metadata = stat_dataset(name)
     except FileNotFoundError:
-        raise NotFound(DATASET_NOT_FOUND_ERROR)
+        raise NOT_FOUND
 
     metadata_featuretypes = metadata.get("featuretypes")
     featuretypes = "\n".join(metadata_featuretypes)
