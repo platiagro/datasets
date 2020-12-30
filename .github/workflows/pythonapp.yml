@@ -15,6 +15,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+
     - name: Code review tips
       uses: unsplash/comment-on-pr@master
       if: ${{ github.event_name == 'pull_request' && github.event.action == 'opened' }}
@@ -51,13 +58,12 @@ jobs:
           ### Build Github actions COM SUCESSO
 
           ### Python
-          - Usar Python 3.7
+          - Usar Python>=3.7
           - Remover `print`.
           - Não deixar código-fonte comentado.
           - f-string `f'text-{variable}'` é melhor que `'text-{}'.format(variable)` e `'text-' + variable`
-          - async/await NÃO EXISTEM no Python 3.7
           - Métodos que são chamados de outros arquivos `.py` **DEVEM TER Docstring**.
-          - Usar Google Style Python Docstring: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
+          - Usar NumPy Style Python Docstring: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html
           - Usar sempre import absoluto.
             ex: `from datasets.samples import init_datasets` (BOM), `from .samples import init_datasets` (RUIM)
 
@@ -82,13 +88,6 @@ jobs:
           - Para atualizar alguns campos de um resource:
             ex: `PATCH /resources/{resourceId}`
           - Em dúvidas? Mantenha uma consistência com as URLs já existem.
-
-    - uses: actions/checkout@v2
-
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
 
     - name: Run MinIO image
       run: |
@@ -118,6 +117,7 @@ jobs:
         MINIO_SECRET_KEY: minio123
 
     - name: SonarCloud Scan
+      if: ${{ always() }}
       uses: sonarsource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
