@@ -6,6 +6,7 @@ from os.path import splitext
 from unicodedata import normalize
 from uuid import uuid4
 
+import numpy as np
 import pandas as pd
 import platiagro
 from chardet.universaldetector import UniversalDetector
@@ -89,7 +90,8 @@ def create_dataset(files):
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
     content = load_dataset(name=name)
-    content = content.where(pd.notnull(content), None)
+    # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
+    content.replace(np.nan, "NaN", inplace=True, regex=True)
     data = content.values.tolist()
     return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": file.filename}
 
@@ -193,6 +195,8 @@ def get_dataset(name, page=1, page_size=10):
             featuretypes = metadata["featuretypes"]
             columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
             content = load_dataset(name)
+            # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
+            content.replace(np.nan, "NaN", inplace=True, regex=True)
             data = content.values.tolist()
 
             if page_size != -1:
