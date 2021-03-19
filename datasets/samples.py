@@ -38,7 +38,6 @@ def init_datasets(config_path):
 
             try:
                 # uses PlatIAgro SDK to save the dataset
-                # marks as read only, so users can't mess with these datasets
-                save_dataset(name, data, metadata=metadata, read_only=True)
+                save_dataset(name, data, metadata=metadata)
             except PermissionError:
                 pass
