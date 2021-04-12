@@ -21,8 +21,9 @@ app = FastAPI(
     title="PlatIAgro Datasets",
     description="These are the docs for PlatIAgro Datasets API. The endpoints below are usually accessed by the PlatIAgro Web-UI",
     version=__version__,
-    
+
 )
+
 
 @app.get("/", response_class=PlainTextResponse)
 async def ping():
@@ -49,7 +50,8 @@ async def handle_list_datasets():
 
 
 @app.post("/datasets")
-async def handle_post_datasets(file: Optional[UploadFile] = File(None)):
+async def handle_post_datasets(request: Request,
+                               file: Optional[UploadFile] = File(None)):
     """
     Handles POST requests to /datasets.
 
@@ -57,25 +59,18 @@ async def handle_post_datasets(file: Optional[UploadFile] = File(None)):
     -------
     str
     """
-    #kwargs = await request.json()
-    #kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-    """
-    kwargs = None
-    if request.data:
-        kwargs = request.get_json(force=True)
+    if file:
+        return create_dataset(file)
+
+    try:
+        kwargs = await request.json()
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
 
-    if kwargs:
-        return jsonify(create_google_drive_dataset(**kwargs))
-    return jsonify(create_dataset(request.files))
-    """
+        if kwargs:
+            return create_google_drive_dataset(**kwargs)
+    except RuntimeError:
+        raise BadRequest("No file part.")
 
-    #if kwargs:
-    #    return create_google_drive_dataset(**kwargs)
-
-    return create_dataset(file) #create_dataset(kwargs.files)
-    
-    
 
 @app.get("/datasets/{name}")
 async def handle_get_dataset(name: str, request: Request):
@@ -91,16 +86,14 @@ async def handle_get_dataset(name: str, request: Request):
     -------
     str
     """
-    page = request.args.get('page', 1)
-    page_size = request.args.get('page_size', 10)
-    #page = request.query_params.get("page")
-    #page_size = request.query_params.get("page_size")
+    page = request.query_params.get("page", 1)
+    page_size = request.query_params.get("page_size", 10)
 
     return get_dataset(name=name, page=page, page_size=page_size)
 
 
 @app.patch("/datasets/{name}")
-async def handle_patch_dataset(name: str, request: Request):
+async def handle_patch_dataset(name: str, featuretypes: UploadFile = File(...)):
     """
     Handles PATCH requests to /datasets/{name}.
 
@@ -113,11 +106,11 @@ async def handle_patch_dataset(name: str, request: Request):
     -------
     str
     """
-    return patch_dataset(name, request)
+    return patch_dataset(name, featuretypes)
 
 
 @app.get("/datasets/{dataset}/columns")
-async def handle_list_columns(dataset):
+async def handle_list_columns(dataset: str):
     """
     Handles GET requests to /datasets/{dataset}/columns.
 
@@ -149,12 +142,13 @@ async def handle_patch_column(dataset: str, column: str, request: Request):
     str
     """
     #featuretype = request.json("")
-    featuretype = request.json()
+    body = await request.json()
+    featuretype = body.get("featuretype")
     return update_column(dataset, column, featuretype)
 
 
 @app.get("/datasets/{dataset}/featuretypes")
-async def handle_get_featuretypes(dataset):
+async def handle_get_featuretypes(dataset: str):
     """
     Handles GET requests to "/datasets/{dataset}/featuretypes.
 
@@ -167,10 +161,9 @@ async def handle_get_featuretypes(dataset):
     str
     """
     featuretypes = get_featuretypes(dataset)
-    response = make_response(featuretypes)
-    response.headers.set('Content-Type', 'text/plain')
-    response.headers.set('Content-Disposition', 'attachment', filename='featuretypes.txt')
-    return response
+    headers = {"Content-Type": "text/plain",
+               "Content-Disposition": "attachment; filename=featuretypes.txt"}
+    return Response(content=featuretypes, headers=headers)
 
 
 @app.exception_handler(BadRequest)
