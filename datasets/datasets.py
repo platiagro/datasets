@@ -16,7 +16,8 @@ from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
-from werkzeug.exceptions import BadRequest, NotFound
+#from werkzeug.exceptions import BadRequest, NotFound
+from datasets.exceptions import BadRequest, NotFound
 
 from datasets.utils import data_pagination
 
@@ -36,13 +37,13 @@ def list_datasets():
     return [{'name': name} for name in datasets]
 
 
-def create_dataset(files):
+def create_dataset(file_object):
     """
     Creates a new dataset in our object storage.
 
     Parameters
     ----------
-    files : dict
+    file_object : dict
         file objects.
 
     Returns
@@ -56,13 +57,13 @@ def create_dataset(files):
         When incoming files are missing or valid.
     """
     # checks if the post request has the file part
-    if "file" not in files:
+    if not file_object:
         raise BadRequest("No file part")
-    file = files["file"]
+    file = file_object.file["file"]
 
     # if user does not select file, the browser also
     # submits an empty part without filename
-    if file.filename == "":
+    if file_object.filename == "":
         raise BadRequest("No selected file")
 
     # generate a dataset name from filename
