@@ -1,0 +1,9 @@
+PassengerId	Survived	Pclass	Name	Sex	Age	SibSp	Parch	Ticket	Fare	Cabin	Embarked
+11	1	3	Sandström, Miss. Marguerite Rut	female	4	1	1	PP 9549	16.7	G6	S
+15	0	3	Veström, Miss. Hulda Amanda Adolfina	female	14	0	0	350406	7.8542		S
+29	1	3	O‘Dwyer, Miss. Ellen “Nellie”	female		0	0	330959	7.8792		Q
+44	1	2	Laroche, Miss. Simonne Marie Anne Andrée	female	3	1	2	SC/Paris 2123	41.5792		C
+84	0	1	Carraú, Mr. Francisco M	male	28	0	0	113059	47.1		S
+92	0	3	Andreasson, Mr. Pål Edvin	male	20	0	0	347466	7.8542		S
+130	0	3	Ekström, Mr. Johan	male	45	0	0	347061	6.975		S
+134	1	2	Weisz, Mrs. Leopold – Mathilde Francoise Pede	female	29	1	0	228414	26		S
