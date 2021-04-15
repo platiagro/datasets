@@ -149,7 +149,18 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get("/datasets/iris.data")
+        rv = TEST_CLIENT.post("/datasets", 
+            files={
+                "file": (
+                    "iris.data", 
+                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
+                    "multipart/form-data"
+                    )
+                }
+            )
+        name = rv.json().get("name")
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}")
         result = rv.json()
         
         expected = {
@@ -325,7 +336,18 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/datasets/iris.data/columns")
+        rv = TEST_CLIENT.post("/datasets", 
+            files={
+                "file": (
+                    "iris.data", 
+                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
+                    "multipart/form-data"
+                    )
+                }
+            )
+        name = rv.json().get("name")
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}/columns")
         result = rv.json()
         expected = [
             {"name": "col0", "featuretype": "DateTime"},
@@ -365,14 +387,14 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.patch(f"/datasets/boston.data/columns/col0", json={"featuretype": "Invalid"})
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Invalid"})
         result = rv.json()
         expected = {"message": "featuretype must be one of DateTime, Numerical, Categorical"}
 
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
 
-        rv = TEST_CLIENT.patch(f"/datasets/boston.data/columns/col0", json={"featuretype": "Numerical"})
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Numerical"})
         result = rv.json()
         expected = {
             "name": "col0",
@@ -416,7 +438,18 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
         
-        rv = TEST_CLIENT.patch("/datasets/iris.data", 
+        rv = TEST_CLIENT.post("/datasets", 
+            files={
+                "file": (
+                    "iris.data", 
+                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
+                    "multipart/form-data"
+                    )
+                }
+            )
+        name = rv.json().get("name")
+
+        rv = TEST_CLIENT.patch(f"/datasets/{name}", 
             files={
                 "featuretypes": (
                     "featuretypes.txt", 
@@ -440,7 +473,7 @@ class TestApi(TestCase):
                          ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
                          ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
-                "name": "iris.data",
+                "name": name,
                 "total": 4
             }
         self.assertDictEqual(expected, result)
