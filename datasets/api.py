@@ -141,7 +141,7 @@ async def handle_patch_column(dataset: str, column: str, request: Request):
     -------
     str
     """
-    #featuretype = request.json("")
+    
     body = await request.json()
     featuretype = body.get("featuretype")
     return update_column(dataset, column, featuretype)
