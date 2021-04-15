@@ -1,6 +1,9 @@
 # WSGI server
-Flask==1.1.1
-Flask-Cors==3.0.8
+fastapi==0.63.0
+# ASGI server
+uvicorn==0.13.3
+# Streaming multipart parser
+python-multipart==0.0.5
 # PlatIAgro SDK
 platiagro @ git+https://github.com/platiagro/sdk.git@master
 # Character Encoding Detector

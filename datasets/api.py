@@ -2,22 +2,31 @@
 """WSGI server."""
 import argparse
 import sys
+from typing import Optional
 
-from flask import Flask, request, jsonify, make_response
-from flask_cors import CORS
-from werkzeug.exceptions import BadRequest, NotFound, InternalServerError
+import uvicorn
+from fastapi import FastAPI, Request, File, UploadFile
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
+from datasets import __version__
 from datasets.columns import list_columns, update_column
 from datasets.datasets import list_datasets, create_dataset, create_google_drive_dataset, \
     get_dataset, get_featuretypes, patch_dataset
 from datasets.samples import init_datasets
 from datasets.utils import to_snake_case
+from datasets.exceptions import BadRequest, NotFound, InternalServerError
 
-app = Flask(__name__)
+app = FastAPI(
+    title="PlatIAgro Datasets",
+    description="These are the docs for PlatIAgro Datasets API."
+                "The endpoints below are usually accessed by the PlatIAgro Web-UI",
+    version=__version__,
+
+)
 
 
-@app.route("/", methods=["GET"])
-def ping():
+@app.get("/", response_class=PlainTextResponse)
+async def ping():
     """
     Handles GET requests to /.
 
@@ -28,8 +37,8 @@ def ping():
     return "pong"
 
 
-@app.route("/datasets", methods=["GET"])
-def handle_list_datasets():
+@app.get("/datasets")
+async def handle_list_datasets():
     """
     Handles GET requests to /datasets.
 
@@ -37,11 +46,12 @@ def handle_list_datasets():
     -------
     str
     """
-    return jsonify(list_datasets())
+    return list_datasets()
 
 
-@app.route("/datasets", methods=["POST"])
-def handle_post_datasets():
+@app.post("/datasets")
+async def handle_post_datasets(request: Request,
+                               file: Optional[UploadFile] = File(None)):
     """
     Handles POST requests to /datasets.
 
@@ -49,20 +59,23 @@ def handle_post_datasets():
     -------
     str
     """
-    kwargs = None
-    if request.data:
-        kwargs = request.get_json(force=True)
+    if file:
+        return create_dataset(file)
+
+    try:
+        kwargs = await request.json()
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
 
-    if kwargs:
-        return jsonify(create_google_drive_dataset(**kwargs))
-    return jsonify(create_dataset(request.files))
+        if kwargs:
+            return create_google_drive_dataset(**kwargs)
+    except RuntimeError:
+        raise BadRequest("No file part.")
 
 
-@app.route("/datasets/<name>", methods=["GET"])
-def handle_get_dataset(name):
+@app.get("/datasets/{name}")
+async def handle_get_dataset(name: str, page: int = 1, page_size: int = 10):
     """
-    Handles GET requests to /datasets/<name>.
+    Handles GET requests to /datasets/{name}.
 
     Parameters
     ----------
@@ -73,16 +86,13 @@ def handle_get_dataset(name):
     -------
     str
     """
-    page = request.args.get('page', 1)
-    page_size = request.args.get('page_size', 10)
-
-    return jsonify(get_dataset(name=name, page=page, page_size=page_size))
+    return get_dataset(name, page, page_size)
 
 
-@app.route("/datasets/<name>", methods=["PATCH"])
-def handle_patch_dataset(name):
+@app.patch("/datasets/{name}")
+async def handle_patch_dataset(name: str, featuretypes: UploadFile = File(...)):
     """
-    Handles PATCH requests to /datasets/<name>.
+    Handles PATCH requests to /datasets/{name}.
 
     Parameters
     ----------
@@ -93,13 +103,13 @@ def handle_patch_dataset(name):
     -------
     str
     """
-    return jsonify(patch_dataset(name, request.files))
+    return patch_dataset(name, featuretypes)
 
 
-@app.route("/datasets/<dataset>/columns", methods=["GET"])
-def handle_list_columns(dataset):
+@app.get("/datasets/{dataset}/columns")
+async def handle_list_columns(dataset: str):
     """
-    Handles GET requests to /datasets/<dataset>/columns.
+    Handles GET requests to /datasets/{dataset}/columns.
 
     Parameters
     ----------
@@ -110,13 +120,13 @@ def handle_list_columns(dataset):
     -------
     str
     """
-    return jsonify(list_columns(dataset))
+    return list_columns(dataset)
 
 
-@app.route("/datasets/<dataset>/columns/<column>", methods=["PATCH"])
-def handle_patch_column(dataset, column):
+@app.patch("/datasets/{dataset}/columns/{column}")
+async def handle_patch_column(dataset: str, column: str, request: Request):
     """
-    Handles PATCH requests to /datasets/<dataset>/columns/<column>.
+    Handles PATCH requests to /datasets/{dataset}/columns/{column}.
 
     Parameters
     ----------
@@ -128,14 +138,16 @@ def handle_patch_column(dataset, column):
     -------
     str
     """
-    featuretype = request.get_json().get("featuretype")
-    return jsonify(update_column(dataset, column, featuretype))
+
+    body = await request.json()
+    featuretype = body.get("featuretype")
+    return update_column(dataset, column, featuretype)
 
 
-@app.route("/datasets/<dataset>/featuretypes", methods=["GET"])
-def handle_get_featuretypes(dataset):
+@app.get("/datasets/{dataset}/featuretypes")
+async def handle_get_featuretypes(dataset: str):
     """
-    Handles GET requests to "/datasets/<dataset>/featuretypes.
+    Handles GET requests to "/datasets/{dataset}/featuretypes.
 
     Parameters
     ----------
@@ -146,24 +158,30 @@ def handle_get_featuretypes(dataset):
     str
     """
     featuretypes = get_featuretypes(dataset)
-    response = make_response(featuretypes)
-    response.headers.set('Content-Type', 'text/plain')
-    response.headers.set('Content-Disposition', 'attachment', filename='featuretypes.txt')
-    return response
+    headers = {"Content-Type": "text/plain",
+               "Content-Disposition": "attachment; filename=featuretypes.txt"}
+    return Response(content=featuretypes, headers=headers)
 
 
-@app.errorhandler(BadRequest)
-@app.errorhandler(NotFound)
-@app.errorhandler(InternalServerError)
-def handle_errors(e):
+@app.exception_handler(BadRequest)
+@app.exception_handler(NotFound)
+@app.exception_handler(InternalServerError)
+async def handle_errors(request: Request, exception: Exception):
     """
     Handles exceptions raised by the API.
+
+    Parameters
+    ----------
+    exception : Exception
 
     Returns
     -------
     str
     """
-    return jsonify({"message": e.description}), e.code
+    return JSONResponse(
+        status_code=exception.code,
+        content={"message": exception.message},
+    )
 
 
 def parse_args(args):
@@ -189,10 +207,30 @@ if __name__ == "__main__":
 
     # Enable CORS if required
     if args.enable_cors:
-        CORS(app)
+        @app.options("/{rest_of_path:path}")
+        async def preflight_handler(request: Request, rest_of_path: str) -> Response:
+            """
+            Handles CORS preflight requests.
+            """
+            response = Response()
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+            return response
+
+        @app.middleware("http")
+        async def add_cors_header(request: Request, call_next):
+            """
+            Sets CORS headers.
+            """
+            response = await call_next(request)
+            response.headers["Access-Control-Allow-Origin"] = "*"
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+            return response
 
     # Install sample datasets if required
     if args.samples_config:
         init_datasets(args.samples_config)
 
-    app.run(host="0.0.0.0", port=args.port, debug=args.debug)
+    uvicorn.run(app, port=args.port, debug=args.debug)

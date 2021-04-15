@@ -3,7 +3,7 @@
 import re
 from itertools import zip_longest
 
-from werkzeug.exceptions import NotFound
+from datasets.exceptions import NotFound
 
 
 def data_pagination(content, page, page_size):

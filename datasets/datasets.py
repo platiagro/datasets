@@ -16,7 +16,7 @@ from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
-from werkzeug.exceptions import BadRequest, NotFound
+from datasets.exceptions import BadRequest, NotFound
 
 from datasets.utils import data_pagination
 
@@ -36,13 +36,13 @@ def list_datasets():
     return [{'name': name} for name in datasets]
 
 
-def create_dataset(files):
+def create_dataset(file_object):
     """
     Creates a new dataset in our object storage.
 
     Parameters
     ----------
-    files : dict
+    file_object : dict
         file objects.
 
     Returns
@@ -55,34 +55,32 @@ def create_dataset(files):
     BadRequest
         When incoming files are missing or valid.
     """
-    # checks if the post request has the file part
-    if "file" not in files:
-        raise BadRequest("No file part")
-    file = files["file"]
+    file = file_object.file
+    filename = file_object.filename
 
     # if user does not select file, the browser also
     # submits an empty part without filename
-    if file.filename == "":
-        raise BadRequest("No selected file")
+    if filename == "":
+        raise BadRequest("No selected file.")
 
     # generate a dataset name from filename
-    name = generate_name(file.filename)
+    name = generate_name(filename)
 
     try:
         # reads file into a DataFrame
-        df = read_into_dataframe(file, file.filename)
+        df = read_into_dataframe(file, filename)
     except Exception:
         # if read fails, then uploads raw file
         file.seek(0, SEEK_SET)
-        save_dataset(name, file, metadata={"original-filename": file.filename})
-        return {"name": name, "filename": file.filename}
+        save_dataset(name, file, metadata={"original-filename": filename})
+        return {"name": name, "filename": filename}
 
     columns = df.columns.values.tolist()
     featuretypes = infer_featuretypes(df)
 
     metadata = {
         "featuretypes": featuretypes,
-        "original-filename": file.filename,
+        "original-filename": filename,
     }
 
     # uses PlatIAgro SDK to save the dataset
@@ -93,7 +91,7 @@ def create_dataset(files):
     # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
     content.replace(np.nan, "NaN", inplace=True, regex=True)
     data = content.values.tolist()
-    return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": file.filename}
+    return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
 
 
 def create_google_drive_dataset(gfile):
@@ -210,7 +208,7 @@ def get_dataset(name, page=1, page_size=10):
         raise BadRequest("Invalid parameters")
 
 
-def patch_dataset(name, files):
+def patch_dataset(name, file_object):
     """
     Update the dataset metadata in our object storage.
 
@@ -219,8 +217,8 @@ def patch_dataset(name, files):
     name : str
         The dataset name to look for in our object storage.
 
-    files : dict
-        File objects.
+    file_object : dict
+        File object.
 
     Returns
     -------
@@ -235,7 +233,7 @@ def patch_dataset(name, files):
     NotFound
         When the dataset does not exist
     """
-    if "featuretypes" not in files:
+    if not file_object.file:
         raise BadRequest("No featuretypes part")
 
     try:
@@ -244,7 +242,7 @@ def patch_dataset(name, files):
         raise NOT_FOUND
 
     try:
-        ftype_file = files["featuretypes"]
+        ftype_file = file_object.file
         featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
         validate_featuretypes(featuretypes)
     except ValueError as e:

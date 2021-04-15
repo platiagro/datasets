@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import validate_featuretypes
-from werkzeug.exceptions import BadRequest, NotFound
+from datasets.exceptions import BadRequest, NotFound
 
 COLUMN_NOT_FOUND = NotFound("The specified column does not exist")
 DATASET_NOT_FOUND = NotFound("The specified dataset does not exist")
