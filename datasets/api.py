@@ -86,8 +86,7 @@ async def handle_get_dataset(name: str, page: int = 1, page_size: int = 10):
     -------
     str
     """
-
-    return get_dataset(name=name, page=page, page_size=page_size)
+    return get_dataset(name, page, page_size)
 
 
 @app.patch("/datasets/{name}")

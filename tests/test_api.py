@@ -1,14 +1,6 @@
 # -*- coding: utf-8 -*-
-from io import BytesIO
 from unittest import TestCase
-from unittest.mock import patch
-
-import json
-
-from numpy import nan
-
 from fastapi.testclient import TestClient
-
 from datasets.api import app, parse_args
 
 MOCKED_DATASET_PATH = "tests/resources/dataset.csv"
@@ -18,6 +10,7 @@ MOCKED_DATASET_PATH_TITANIC = "tests/resources/titanic.csv"
 MOCKED_DATASET_PATH_FEATURETYPE = "tests/resources/featuretypes.txt"
 
 TEST_CLIENT = TestClient(app)
+
 
 class TestApi(TestCase):
     maxDiff = None
@@ -34,22 +27,21 @@ class TestApi(TestCase):
         rv = TEST_CLIENT.get("/")
         assert rv.status_code == 200
         assert rv.text == "pong"
-      
+
     def test_list_datasets(self):
         rv = TEST_CLIENT.get("/datasets")
         result = rv.json()
         self.assertIsInstance(result, list)
 
-    def test_create_datasets(self):  
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "dataset.csv", 
-                    open(MOCKED_DATASET_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+    def test_create_datasets(self):
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "dataset.csv",
+                open(MOCKED_DATASET_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         result = rv.json()
         self.assertIsInstance(result, dict)
         self.assertEqual(rv.status_code, 200)
@@ -62,16 +54,15 @@ class TestApi(TestCase):
 
         rv = TEST_CLIENT.get("/datasets")
         assert isinstance(rv.json(), list)
-    
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "image.gif", 
-                    open(MOCKED_DATASET_PATH_GIF, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "image.gif",
+                open(MOCKED_DATASET_PATH_GIF, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         result = rv.json()
         expected = {
             "filename": "image.gif"
@@ -84,15 +75,14 @@ class TestApi(TestCase):
         self.assertEqual(result, expected)
         assert rv.status_code == 200
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "titanic.csv", 
-                    open(MOCKED_DATASET_PATH_TITANIC, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "titanic.csv",
+                open(MOCKED_DATASET_PATH_TITANIC, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         result = rv.json()
         expected = {
             "columns": [
@@ -125,7 +115,7 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-         # test google file with invalid token
+        # test google file with invalid token
         rv = TEST_CLIENT.post("/datasets", json={
             "gfile": {
                 "clientId": "clientId",
@@ -140,7 +130,7 @@ class TestApi(TestCase):
         expected = {'message': 'Invalid token: client unauthorized'}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
-    
+
     def test_get_dataset(self):
         rv = TEST_CLIENT.get("/datasets/UNK")
         result = rv.json()
@@ -149,20 +139,19 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "iris.data", 
-                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
 
         rv = TEST_CLIENT.get(f"/datasets/{name}")
         result = rv.json()
-        
+
         expected = {
             "columns": [
                 {"name": "col0", "featuretype": "DateTime"},
@@ -179,13 +168,13 @@ class TestApi(TestCase):
             "filename": "iris.data",
             "total": 4
         }
-        
+
         self.assertIn("name", result)
         del result["name"]
 
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-           
+
         rv = TEST_CLIENT.get(f"/datasets/{name}?page=1&page_size=2")
         result = rv.json()
         expected = {
@@ -235,9 +224,20 @@ class TestApi(TestCase):
 
         rv = TEST_CLIENT.get(f"/datasets/{name}?page=A&page_size=2")
         result = rv.json()
-        expected = {"message": "Invalid parameters"}
+        expected = {
+            "detail": [
+                    {
+                        "loc": [
+                            "query",
+                            "page"
+                        ],
+                        "msg": "value is not a valid integer",
+                        "type": "type_error.integer"
+                    }
+            ]
+        }
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 400)
+        self.assertEqual(rv.status_code, 422)
 
         rv = TEST_CLIENT.get(f"/datasets/iris.data?page_size=-1")
         result = rv.json()
@@ -296,15 +296,14 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "iris.data", 
-                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
 
         rv = TEST_CLIENT.get(f"/datasets/{name}/columns")
@@ -329,15 +328,14 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "iris.data", 
-                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
 
         rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
@@ -364,17 +362,16 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "image.gif", 
-                    open(MOCKED_DATASET_PATH_GIF, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "image.gif",
+                open(MOCKED_DATASET_PATH_GIF, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
-        
+
         rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
 
         result = rv.json()
@@ -383,39 +380,36 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-    def test_patch_dataset(self):    
-        rv = TEST_CLIENT.patch("/datasets/UNK", 
-            files={
-                "featuretypes": (
-                    "featuretypes.txt", 
-                    open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"), 
-                    "multipart/form-data"
-                )
+    def test_patch_dataset(self):
+        rv = TEST_CLIENT.patch("/datasets/UNK", files={
+            "featuretypes": (
+                "featuretypes.txt",
+                open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
+                "multipart/form-data"
+            )
             }
         )
         result = rv.json()
         expected = {"message": "The specified dataset does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
-        
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "iris.data", 
-                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
 
-        rv = TEST_CLIENT.patch(f"/datasets/{name}", 
-            files={
-                "featuretypes": (
-                    "featuretypes.txt", 
-                    open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"), 
-                    "multipart/form-data"
-                )
+        rv = TEST_CLIENT.patch(f"/datasets/{name}", files={
+            "featuretypes": (
+                "featuretypes.txt",
+                open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
+                "multipart/form-data"
+            )
             }
         )
         result = rv.json()
@@ -446,15 +440,14 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.post("/datasets", 
-            files={
-                "file": (
-                    "iris.data", 
-                    open(MOCKED_DATASET_NO_HEADER_PATH, "rb"), 
-                    "multipart/form-data"
-                    )
-                }
-            )
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
         name = rv.json().get("name")
 
         rv = TEST_CLIENT.get(f"/datasets/{name}/featuretypes")
