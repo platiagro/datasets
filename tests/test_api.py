@@ -185,48 +185,8 @@ class TestApi(TestCase):
 
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-    
-        rv = TEST_CLIENT.get("/datasets/boston.data")
-        result = rv.json()
-        expected = {
-            "columns": [
-                    {"name": "col0", "featuretype": "Numerical"},
-                    {"name": "col1", "featuretype": "Numerical"},
-                    {"name": "col2", "featuretype": "Numerical"},
-                    {"name": "col3", "featuretype": "Numerical"},
-                    {"name": "col4", "featuretype": "Numerical"},
-                    {"name": "col5", "featuretype": "Numerical"},
-                    {"name": "col6", "featuretype": "Numerical"},
-                    {"name": "col7", "featuretype": "Numerical"},
-                    {"name": "col8", "featuretype": "Numerical"},
-                    {"name": "col9", "featuretype": "Numerical"},
-                    {"name": "col10", "featuretype": "Numerical"},
-                    {"name": "col11", "featuretype": "Numerical"},
-                    {"name": "col12", "featuretype": "Numerical"},
-                    {"name": "col13", "featuretype": "Numerical"},
-                ],
-            "data": [[0.00632, 18.0, 2.31, 0.0, 0.538, 6.575, 65.2,
-                      4.09, 1.0, 296.0, 15.3, 396.9, 4.98, 24.0],
-                    [0.02731, 0.0, 7.07, 0.0, 0.469, 6.421, 78.9,
-                     4.9671, 2.0, 242.0, 17.8, 396.9, 9.14, 21.6],
-                    [0.02729, 0.0, 7.07, 0.0, 0.469, 7.185, 61.1,
-                     4.9671, 2.0, 242.0, 17.8, 392.83, 4.03, 34.7],
-                    [0.03237, 0.0, 2.18, 0.0, 0.458, 6.998, 45.8,
-                     6.0622, 3.0, 222.0, 18.7, 394.63, 2.94, 33.4],
-                    [0.06905, 0.0, 2.18, 0.0, 0.458, 7.147, 54.2,
-                     6.0622, 3.0, 222.0, 18.7, 396.9, 5.33, 36.2]],
-            "total": 5,
-            "filename": "boston.data",
-        }
-        # name is machine-generated
-        # we assert it exists, but we don't assert their values
-        self.assertIn("name", result)
-        del result["name"]
-
-        self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
-    
-        rv = TEST_CLIENT.get("/datasets/iris.data?page=1&page_size=2")
+           
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=1&page_size=2")
         result = rv.json()
         expected = {
             "columns": [
@@ -246,7 +206,7 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-        rv = TEST_CLIENT.get("/datasets/iris.data?page=1&page_size=3")
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=1&page_size=3")
         result = rv.json()
         expected = {
             "columns": [
@@ -273,7 +233,7 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
-        rv = TEST_CLIENT.get(f"/datasets/iris.data?page=A&page_size=2")
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=A&page_size=2")
         result = rv.json()
         expected = {"message": "Invalid parameters"}
         self.assertDictEqual(expected, result)
