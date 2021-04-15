@@ -2,7 +2,6 @@
 """WSGI server."""
 import argparse
 import sys
-import json
 from typing import Optional
 
 import uvicorn
@@ -19,7 +18,8 @@ from datasets.exceptions import BadRequest, NotFound, InternalServerError
 
 app = FastAPI(
     title="PlatIAgro Datasets",
-    description="These are the docs for PlatIAgro Datasets API. The endpoints below are usually accessed by the PlatIAgro Web-UI",
+    description="These are the docs for PlatIAgro Datasets API."
+                "The endpoints below are usually accessed by the PlatIAgro Web-UI",
     version=__version__,
 
 )
@@ -73,7 +73,7 @@ async def handle_post_datasets(request: Request,
 
 
 @app.get("/datasets/{name}")
-async def handle_get_dataset(name: str, request: Request):
+async def handle_get_dataset(name: str, page: int = 1, page_size: int = 10):
     """
     Handles GET requests to /datasets/{name}.
 
@@ -86,8 +86,6 @@ async def handle_get_dataset(name: str, request: Request):
     -------
     str
     """
-    page = request.query_params.get("page", 1)
-    page_size = request.query_params.get("page_size", 10)
 
     return get_dataset(name=name, page=page, page_size=page_size)
 
@@ -141,7 +139,7 @@ async def handle_patch_column(dataset: str, column: str, request: Request):
     -------
     str
     """
-    
+
     body = await request.json()
     featuretype = body.get("featuretype")
     return update_column(dataset, column, featuretype)

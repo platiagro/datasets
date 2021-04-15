@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 class BadRequest(Exception):
     def __init__(self, message: str):
         self.message = message
