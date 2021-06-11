@@ -42,7 +42,7 @@ def create_dataset(file_object):
 
     Parameters
     ----------
-    file_object : dict
+    file_object : dict or fastapi.File
         file objects.
 
     Returns
@@ -55,8 +55,12 @@ def create_dataset(file_object):
     BadRequest
         When incoming files are missing or valid.
     """
-    file = file_object.file
-    filename = file_object.filename
+    if isinstance(file_object, dict):
+        file = file_object["file"]
+        filename = file.filename
+    else:
+        file = file_object.file
+        filename = file_object.filename
 
     # if user does not select file, the browser also
     # submits an empty part without filename
