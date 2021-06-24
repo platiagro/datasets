@@ -33,6 +33,13 @@ class TestApi(TestCase):
         self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
         self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
+    def test_options_preflight(self):
+        rv = TEST_CLIENT.options("/")
+        self.assertEqual(rv.status_code, 200)
+        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
+
     def test_list_datasets(self):
         rv = TEST_CLIENT.get("/datasets")
         result = rv.json()
