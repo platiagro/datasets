@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+os.environ["ENABLE_CORS"] = "1"
 from unittest import TestCase
 from fastapi.testclient import TestClient
 from datasets.api import app, parse_args
@@ -25,8 +27,11 @@ class TestApi(TestCase):
 
     def test_ping(self):
         rv = TEST_CLIENT.get("/")
-        assert rv.status_code == 200
-        assert rv.text == "pong"
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.text, "pong")
+        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
     def test_list_datasets(self):
         rv = TEST_CLIENT.get("/datasets")
