@@ -94,6 +94,8 @@ def create_dataset(file_object):
     content = load_dataset(name=name)
     # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
     content.replace(np.nan, "NaN", inplace=True, regex=True)
+    content.replace(np.inf, "Inf", inplace=True, regex=True)
+    content.replace(-np.inf, "-Inf", inplace=True, regex=True)
     data = content.values.tolist()
     return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
 
@@ -199,6 +201,8 @@ def get_dataset(name, page=1, page_size=10):
             content = load_dataset(name)
             # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
             content.replace(np.nan, "NaN", inplace=True, regex=True)
+            content.replace(np.inf, "Inf", inplace=True, regex=True)
+            content.replace(-np.inf, "-Inf", inplace=True, regex=True)
             data = content.values.tolist()
 
             if page_size != -1:
