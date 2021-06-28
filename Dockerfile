@@ -25,5 +25,5 @@ WORKDIR /app/
 
 EXPOSE 8080
 
-ENTRYPOINT ["python", "-m", "datasets.api"]
-CMD ["--samples-config", "/samples/config.json"]
+ENTRYPOINT ["uvicorn", "datasets.api:app"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "--workers", "4"]

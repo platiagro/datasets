@@ -84,7 +84,24 @@ pip install .
 Then, start the API server:
 
 ```bash
-python -m datasets.api
+uvicorn datasets.api:app
+```
+
+Arguments:
+
+```bash
+usage: uvicorn datasets.api:app [-h] [--host TEXT] [--port INTEGER] [--workers INTEGER]
+
+Datasets API
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --host TEXT        Bind socket to this host (default: 127.0.0.1)
+  --port INTEGER     Port for HTTP server (default: 8000)
+  --workers INTEGER  Number of worker processes.
+
+environment variables:
+  ENABLE_CORS          whether to enable CORS headers for all responses.
 ```
 
 ## Testing
