@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""WSGI server."""
+"""ASGI server."""
 import argparse
+import os
 import sys
 from typing import Optional
 
@@ -12,7 +13,6 @@ from datasets import __version__
 from datasets.columns import list_columns, update_column
 from datasets.datasets import list_datasets, create_dataset, create_google_drive_dataset, \
     get_dataset, get_featuretypes, patch_dataset
-from datasets.samples import init_datasets
 from datasets.utils import to_snake_case
 from datasets.exceptions import BadRequest, NotFound, InternalServerError
 
@@ -21,7 +21,6 @@ app = FastAPI(
     description="These are the docs for PlatIAgro Datasets API."
                 "The endpoints below are usually accessed by the PlatIAgro Web-UI",
     version=__version__,
-
 )
 
 
@@ -184,20 +183,47 @@ async def handle_errors(request: Request, exception: Exception):
     )
 
 
+def enable_cors():
+    """
+    Enables CORS preflight requests.
+    """
+    @app.options("/{rest_of_path:path}")
+    async def preflight_handler(request: Request, rest_of_path: str) -> Response:
+        """
+        Handles CORS preflight requests.
+        """
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        return response
+
+    @app.middleware("http")
+    async def add_cors_header(request: Request, call_next):
+        """
+        Sets CORS headers.
+        """
+        response = await call_next(request)
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        return response
+
+
+if os.getenv("ENABLE_CORS"):
+    enable_cors()
+
+
 def parse_args(args):
     """Takes argv and parses API options."""
     parser = argparse.ArgumentParser(
-        description="Datasets API"
+        description="Datasets API",
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
-    )
-    parser.add_argument("--enable-cors", action="count")
-    parser.add_argument(
-        "--debug", action="count", help="Enable debug"
+        "--host", type=str, default="127.0.0.1", help="Host for HTTP server (default: 127.0.0.1)",
     )
     parser.add_argument(
-        "--samples-config", help="Path to sample datasets config file."
+        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)",
     )
     return parser.parse_args(args)
 
@@ -205,32 +231,4 @@ def parse_args(args):
 if __name__ == "__main__":
     args = parse_args(sys.argv[1:])
 
-    # Enable CORS if required
-    if args.enable_cors:
-        @app.options("/{rest_of_path:path}")
-        async def preflight_handler(request: Request, rest_of_path: str) -> Response:
-            """
-            Handles CORS preflight requests.
-            """
-            response = Response()
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-            return response
-
-        @app.middleware("http")
-        async def add_cors_header(request: Request, call_next):
-            """
-            Sets CORS headers.
-            """
-            response = await call_next(request)
-            response.headers["Access-Control-Allow-Origin"] = "*"
-            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
-            return response
-
-    # Install sample datasets if required
-    if args.samples_config:
-        init_datasets(args.samples_config)
-
-    uvicorn.run(app, port=args.port, debug=args.debug)
+    uvicorn.run(app, host=args.host, port=args.port)
