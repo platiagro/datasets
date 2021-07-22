@@ -305,7 +305,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     compression = infer_compression(filename, "infer")
 
     file.seek(0, SEEK_SET)
-    contents = file.read()
+    contents = file.readline()
 
     with BytesIO(contents) as file:
         df0 = pd.read_csv(
