@@ -305,9 +305,9 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     compression = infer_compression(filename, "infer")
 
     file.seek(0, SEEK_SET)
-    contents = file.readline()
+    contents = file
 
-    with BytesIO(contents) as file:
+    with contents as file:
         df0 = pd.read_csv(
             file,
             encoding=encoding,
@@ -340,7 +340,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     header = "infer" if final_checker else None
     prefix = None if header else "col"
 
-    with BytesIO(contents) as file:
+    with contents as file:
         df = pd.read_csv(
             file,
             encoding=encoding,
