@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
-import csv
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from googleapiclient.discovery import build
@@ -305,9 +304,8 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
         filename = uuid4().hex
 
     compression = infer_compression(filename, "infer")
-
+    print(compression)
     file.seek(0, SEEK_SET)
-    contents = file
 
     df0 = pd.read_csv(
         file,
@@ -323,6 +321,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
 
     # Check if all columns are strings and short strings(text values tend to be long)
     column_names_checker = all([type(item) == str for item in df0_cols])
+
     if column_names_checker:
         column_names_checker = all([len(item) < max_characters for item in df0_cols])
 
@@ -339,19 +338,19 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     # Prefix and header
     final_checker = True if (column_names_checker and conversion_checker) else False
     header = "infer" if final_checker else None
-
     prefix = None if header else "col"
 
-    with contents as file:
-        df = pd.read_csv(
-            file,
-            encoding=encoding,
-            compression=compression,
-            sep=None,
-            engine="python",
-            header=header,
-            prefix=prefix,
-        )
+    file.seek(0, SEEK_SET)
+
+    df = pd.read_csv(
+        file,
+        encoding=encoding,
+        compression=compression,
+        sep=None,
+        engine="python",
+        header=header,
+        prefix=prefix,
+    )
 
     return df
 
