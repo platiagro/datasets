@@ -230,9 +230,10 @@ class TestApi(TestCase):
 
         rv = TEST_CLIENT.get("/datasets/iris.data?page=15&page_size=2")
         result = rv.json()
-        expected = {"filename": "iris.data", "name": "iris.data"}
+        #expected = {"filename": "iris.data", "name": "iris.data"}
+        expected = {'message': 'The specified page does not exist'}
         self.assertDictEqual(expected, result)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 404)
 
         rv = TEST_CLIENT.get(f"/datasets/{name}?page=A&page_size=2")
         result = rv.json()
@@ -287,9 +288,10 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa']],
+            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 1
+            "total": 4
         }
         # name is machine-generated
         # we assert it exists, but we don't check its value
