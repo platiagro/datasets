@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
-from io import BytesIO
+from io import BytesIO, TextIOWrapper
 from os import SEEK_SET
 from os.path import splitext
 from unicodedata import normalize
@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
+import datasets.monkeypatch
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from googleapiclient.discovery import build
@@ -266,7 +267,7 @@ def patch_dataset(name, file_object):
     return get_dataset(name)
 
 
-def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
+def read_into_dataframe(file, filename=None, nrows=50, max_characters=50):
     """
     Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
@@ -304,11 +305,12 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
         filename = uuid4().hex
 
     compression = infer_compression(filename, "infer")
-    print(compression)
+
     file.seek(0, SEEK_SET)
 
+    pdread = TextIOWrapper(file, encoding=encoding)
     df0 = pd.read_csv(
-        file,
+        pdread,
         encoding=encoding,
         compression=compression,
         sep=None,
@@ -341,9 +343,8 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     prefix = None if header else "col"
 
     file.seek(0, SEEK_SET)
-
     df = pd.read_csv(
-        file,
+        pdread,
         encoding=encoding,
         compression=compression,
         sep=None,
@@ -351,7 +352,6 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
         header=header,
         prefix=prefix,
     )
-
     return df
 
 
