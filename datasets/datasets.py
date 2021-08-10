@@ -58,6 +58,7 @@ def create_dataset(file_object):
     """
     if isinstance(file_object, dict):
         file = file_object["file"]
+        print(file)
         filename = file.filename
     else:
         file = file_object.file
@@ -84,21 +85,25 @@ def create_dataset(file_object):
     featuretypes = infer_featuretypes(df)
 
     metadata = {
+        "columns": columns,
         "featuretypes": featuretypes,
         "original-filename": filename,
+        "total": len(df.index),
     }
 
+    file.seek(0, SEEK_SET)
+    contents = BytesIO(file.read())
     # uses PlatIAgro SDK to save the dataset
-    save_dataset(name, df, metadata=metadata)
+    save_dataset(name, contents, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-    content = load_dataset(name=name)
+
     # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
-    content.replace(np.nan, "NaN", inplace=True, regex=True)
-    content.replace(np.inf, "Inf", inplace=True, regex=True)
-    content.replace(-np.inf, "-Inf", inplace=True, regex=True)
-    data = content.values.tolist()
-    return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
+    df.replace(np.nan, "NaN", inplace=True, regex=True)
+    df.replace(np.inf, "Inf", inplace=True, regex=True)
+    df.replace(-np.inf, "-Inf", inplace=True, regex=True)
+    data = df.values.tolist()
+    return {"name": name, "columns": columns, "data": data, "total": len(df.index), "filename": filename}
 
 
 def create_google_drive_dataset(gfile):
@@ -267,7 +272,7 @@ def patch_dataset(name, file_object):
     return get_dataset(name)
 
 
-def read_into_dataframe(file, filename=None, nrows=50, max_characters=50):
+def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     """
     Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
@@ -350,6 +355,7 @@ def read_into_dataframe(file, filename=None, nrows=50, max_characters=50):
         sep=None,
         engine="python",
         header=header,
+        nrows=nrows,
         prefix=prefix,
     )
     return df
