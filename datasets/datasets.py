@@ -58,7 +58,6 @@ def create_dataset(file_object):
     """
     if isinstance(file_object, dict):
         file = file_object["file"]
-        print(file)
         filename = file.filename
     else:
         file = file_object.file
