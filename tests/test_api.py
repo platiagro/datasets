@@ -173,12 +173,11 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
                      ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
                      ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 4
+            "total": 3
         }
 
         self.assertIn("name", result)
@@ -198,10 +197,10 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 4
+            "total": 3
         }
         del result["name"]
         self.assertDictEqual(expected, result)
@@ -218,11 +217,11 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                     ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 4
+            "total": 3
         }
         del result["name"]
         self.assertDictEqual(expected, result)
@@ -230,7 +229,7 @@ class TestApi(TestCase):
 
         rv = TEST_CLIENT.get("/datasets/iris.data?page=15&page_size=2")
         result = rv.json()
-        expected = {"message": "The specified page does not exist"}
+        expected = {'message': 'The specified page does not exist'}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
 
@@ -262,12 +261,11 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
                      ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
                      ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 4
+            "total": 3
         }
         # name is machine-generated
         # we assert it exists, but we don't check its value
@@ -287,10 +285,10 @@ class TestApi(TestCase):
                 {"name": "col4", "featuretype": "Numerical"},
                 {"name": "col5", "featuretype": "Categorical"},
             ],
-            "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                     ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa']],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
             "filename": "iris.data",
-            "total": 4
+            "total": 3
         }
         # name is machine-generated
         # we assert it exists, but we don't check its value
@@ -434,13 +432,12 @@ class TestApi(TestCase):
                     {"name": "col4", "featuretype": "Numerical"},
                     {"name": "col5", "featuretype": "Categorical"},
                 ],
-                "data": [['01/01/2000', 5.1, 3.5, 1.4, 0.2, 'Iris-setosa'],
-                         ['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
                          ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
                          ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
                 "filename": "iris.data",
                 "name": name,
-                "total": 4
+                "total": 3
             }
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)

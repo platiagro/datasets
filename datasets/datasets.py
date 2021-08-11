@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-from io import BytesIO
+from io import TextIOWrapper
 from os import SEEK_SET
 from os.path import splitext
+from tempfile import SpooledTemporaryFile
 from unicodedata import normalize
 from uuid import uuid4
 
@@ -16,11 +17,14 @@ from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
+
+from datasets import monkeypatch  # noqa: F401
 from datasets.exceptions import BadRequest, NotFound
 
 from datasets.utils import data_pagination
 
 NOT_FOUND = NotFound("The specified dataset does not exist")
+SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
 
 
 def list_datasets():
@@ -83,21 +87,24 @@ def create_dataset(file_object):
     featuretypes = infer_featuretypes(df)
 
     metadata = {
+        "columns": columns,
         "featuretypes": featuretypes,
         "original-filename": filename,
+        "total": len(df.index),
     }
 
+    file.seek(0, SEEK_SET)
     # uses PlatIAgro SDK to save the dataset
-    save_dataset(name, df, metadata=metadata)
+    save_dataset(name, file, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
-    content = load_dataset(name=name)
+
     # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
-    content.replace(np.nan, "NaN", inplace=True, regex=True)
-    content.replace(np.inf, "Inf", inplace=True, regex=True)
-    content.replace(-np.inf, "-Inf", inplace=True, regex=True)
-    data = content.values.tolist()
-    return {"name": name, "columns": columns, "data": data, "total": len(content.index), "filename": filename}
+    df.replace(np.nan, "NaN", inplace=True, regex=True)
+    df.replace(np.inf, "Inf", inplace=True, regex=True)
+    df.replace(-np.inf, "-Inf", inplace=True, regex=True)
+    data = df.values.tolist()
+    return {"name": name, "columns": columns, "data": data, "total": len(df.index), "filename": filename}
 
 
 def create_google_drive_dataset(gfile):
@@ -148,7 +155,7 @@ def create_google_drive_dataset(gfile):
     else:
         request = service.files().get_media(fileId=file_id)
 
-    fh = BytesIO()
+    fh = SpooledTemporaryFile(max_size=SPOOLED_MAX_SIZE)
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     try:
@@ -291,6 +298,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     -----
     If no filename is given, a hex uuid will be used as the file name.
     """
+
     detector = UniversalDetector()
     for line, text in enumerate(file):
         detector.feed(text)
@@ -305,23 +313,23 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     compression = infer_compression(filename, "infer")
 
     file.seek(0, SEEK_SET)
-    contents = file.read()
 
-    with BytesIO(contents) as file:
-        df0 = pd.read_csv(
-            file,
-            encoding=encoding,
-            compression=compression,
-            sep=None,
-            engine="python",
-            header="infer",
-            nrows=nrows,
-        )
+    pdread = TextIOWrapper(file, encoding=encoding)
+    df0 = pd.read_csv(
+        pdread,
+        encoding=encoding,
+        compression=compression,
+        sep=None,
+        engine="python",
+        header="infer",
+        nrows=nrows,
+    )
 
     df0_cols = list(df0.columns)
 
     # Check if all columns are strings and short strings(text values tend to be long)
     column_names_checker = all([type(item) == str for item in df0_cols])
+
     if column_names_checker:
         column_names_checker = all([len(item) < max_characters for item in df0_cols])
 
@@ -340,16 +348,17 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     header = "infer" if final_checker else None
     prefix = None if header else "col"
 
-    with BytesIO(contents) as file:
-        df = pd.read_csv(
-            file,
-            encoding=encoding,
-            compression=compression,
-            sep=None,
-            engine="python",
-            header=header,
-            prefix=prefix,
-        )
+    pdread.seek(0, SEEK_SET)
+    df = pd.read_csv(
+        pdread,
+        encoding=encoding,
+        compression=compression,
+        sep=None,
+        engine="python",
+        header=header,
+        nrows=nrows,
+        prefix=prefix,
+    )
     return df
 
 
