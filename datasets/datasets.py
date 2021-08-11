@@ -346,7 +346,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     header = "infer" if final_checker else None
     prefix = None if header else "col"
 
-    file.seek(0, SEEK_SET)
+    pdread.seek(0, SEEK_SET)
     df = pd.read_csv(
         pdread,
         encoding=encoding,
