@@ -8,7 +8,6 @@ from uuid import uuid4
 
 import numpy as np
 import pandas as pd
-import datasets.monkeypatch
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from googleapiclient.discovery import build
@@ -17,6 +16,8 @@ from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
+
+from datasets import monkeypatch  # noqa: F401
 from datasets.exceptions import BadRequest, NotFound
 
 from datasets.utils import data_pagination
@@ -91,9 +92,8 @@ def create_dataset(file_object):
     }
 
     file.seek(0, SEEK_SET)
-    contents = BytesIO(file.read())
     # uses PlatIAgro SDK to save the dataset
-    save_dataset(name, contents, metadata=metadata)
+    save_dataset(name, file, metadata=metadata)
 
     columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
 
