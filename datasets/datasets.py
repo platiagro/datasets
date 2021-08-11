@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
-from io import BytesIO, TextIOWrapper
+from io import TextIOWrapper
 from os import SEEK_SET
 from os.path import splitext
+from tempfile import SpooledTemporaryFile
 from unicodedata import normalize
 from uuid import uuid4
 
@@ -23,6 +24,7 @@ from datasets.exceptions import BadRequest, NotFound
 from datasets.utils import data_pagination
 
 NOT_FOUND = NotFound("The specified dataset does not exist")
+SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
 
 
 def list_datasets():
@@ -153,7 +155,7 @@ def create_google_drive_dataset(gfile):
     else:
         request = service.files().get_media(fileId=file_id)
 
-    fh = BytesIO()
+    fh = SpooledTemporaryFile(max_size=SPOOLED_MAX_SIZE)
     downloader = MediaIoBaseDownload(fh, request)
     done = False
     try:
