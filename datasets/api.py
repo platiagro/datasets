@@ -8,6 +8,8 @@ from typing import Optional
 import uvicorn
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import StreamingResponse
+
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
@@ -15,6 +17,12 @@ from datasets.datasets import list_datasets, create_dataset, create_google_drive
     get_dataset, get_featuretypes, patch_dataset
 from datasets.utils import to_snake_case
 from datasets.exceptions import BadRequest, NotFound, InternalServerError
+
+
+import platiagro
+
+
+CHUNK_SIZE = 1024
 
 app = FastAPI(
     title="PlatIAgro Datasets",
@@ -160,6 +168,37 @@ async def handle_get_featuretypes(dataset: str):
     headers = {"Content-Type": "text/plain",
                "Content-Disposition": "attachment; filename=featuretypes.txt"}
     return Response(content=featuretypes, headers=headers)
+
+@app.get("/datasets/{name}/downloads", response_class=StreamingResponse)
+async def handle_dataset_download(name: str):
+    """
+    Handles GET requests to "/datasets/{dataset}/downloads.
+
+    Parameters
+    ----------
+    dataset : str
+
+    Returns
+    -------
+    str
+    """
+    
+    minio_response = platiagro.get_dataset(name)
+     
+     # Makes a generator to perform lazy evaluation
+    def generator(filelike_response, chunk_size=CHUNK_SIZE):
+        """Lazy function (generator) to read a file piece by piece."""
+
+        while True:
+            bytes_read = filelike_response.read(chunk_size)
+            if not bytes_read:
+                break
+            yield bytes_read
+   
+    contents = generator(minio_response)
+    response = StreamingResponse(contents, media_type="application/x-zip-compressed")
+    response.headers["Content-Disposition"] = f"attachment; filename={name}"
+    return response   
 
 
 @app.exception_handler(BadRequest)
