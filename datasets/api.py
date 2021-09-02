@@ -59,11 +59,19 @@ async def handle_list_datasets():
 
 
 @app.post("/datasets")
-def handle_post_datasets(request: Request,
-                               file: Optional[UploadFile] = File(None)):
+def handle_post_datasets(request: Request, file: Optional[UploadFile] = File(None)):
     """
     Handles POST requests to /datasets.
 
+    obs: As you can see, this function instead of being asynchronous is synchronous.
+    This change was necessary to correct a bug, in which the file, which is by the way
+    a SpooledTemporaryFile, was losing from memory, and because of this, MINIOCLIENT was 
+    unable to perform the put object command. Putting as synchronous solved this problem,
+    probably the error is due to the way the asynchronous function is being erroneously 
+    used in synchronous situations. Follow the link regarding file upload using FastAPI:
+    
+    https://github.com/tiangolo/fastapi/blob/master/docs/en/docs/tutorial/request-files.md#:~:text=File%20parameters%20with%20UploadFile
+    
     Returns
     -------
     str
@@ -72,7 +80,6 @@ def handle_post_datasets(request: Request,
         return create_dataset(file)
 
     try:
-        print(request)
         kwargs = asyncio.run(request.json())
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
 
@@ -80,6 +87,9 @@ def handle_post_datasets(request: Request,
             return create_google_drive_dataset(**kwargs)
     except RuntimeError:
         raise BadRequest("No file part.")
+        
+
+
 
 
 @app.get("/datasets/{name}")
