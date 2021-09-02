@@ -80,9 +80,11 @@ def handle_post_datasets(request: Request, file: Optional[UploadFile] = File(Non
         return create_dataset(file)
 
     try:
+        # request methods in fastapi are async by implementation
+        # so, to be able to use inside a sync function we had to use this way
         kwargs = asyncio.run(request.json())
+        
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-
         if kwargs:
             return create_google_drive_dataset(**kwargs)
     except RuntimeError:
