@@ -308,6 +308,26 @@ class TestApi(TestCase):
         del result["name"]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
+        
+    def test_download_dataset(self):
+        # non-existent dataset        
+        rv = TEST_CLIENT.get("/datasets/UNK/downloads")
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+      
+        # valid download request  
+        rv = TEST_CLIENT.get(f"/datasets/iris.data/downloads", stream=True)
+
+        # remember! this is a streaming response!
+        result = rv.raw
+        expected_lines =[b'"01/01/2000",5.1,3.5,1.4,0.2,"Iris-setosa"\n',
+                         b'"01/01/2001",4.9,3.0,1.4,0.2,"Iris-setosa"\n',
+                         b'"01/01/2002",4.7,3.2,1.3,0.2,"Iris-setosa"\n',
+                         b'"01/01/2003",4.6,3.1,1.5,0.2,"Iris-setosa"']
+
+        self.assertListEqual(expected_lines, result.readlines())
 
     def test_list_columns(self):
         rv = TEST_CLIENT.get("/datasets/UNK/columns")

@@ -197,9 +197,15 @@ async def handle_dataset_download(name: str):
     -------
     str
     """
-    
-    minio_response = platiagro.get_dataset(name)
-     
+    NOT_FOUND = NotFound("The specified dataset does not exist")
+
+    try:
+        minio_response = platiagro.get_dataset(name)
+    except FileNotFoundError:
+        raise NOT_FOUND
+    except ValueError:
+        raise BadRequest("Invalid parameters")
+
      # Makes a generator to perform lazy evaluation
     def generator(filelike_response, chunk_size=CHUNK_SIZE):
         """Lazy function (generator) to read a file piece by piece."""
