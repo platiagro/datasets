@@ -44,6 +44,7 @@ class TestApi(TestCase):
         rv = TEST_CLIENT.get("/datasets")
         result = rv.json()
         self.assertIsInstance(result)
+        
     def test_options_preflight(self):
         rv = TEST_CLIENT.options("/")
         self.assertEqual(rv.status_code, 200)
