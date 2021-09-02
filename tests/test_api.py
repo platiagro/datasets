@@ -17,44 +17,44 @@ TEST_CLIENT = TestClient(app)
 class TestApi(TestCase):
     maxDiff = None
 
-    # def test_parse_args(self):
-    #     parser = parse_args([])
-    #     self.assertEqual(parser.port, 8080)
-    #     parser = parse_args(["--host", "0.0.0.0"])
-    #     self.assertEqual(parser.host, "0.0.0.0")
-    #     parser = parse_args(["--port", "3000"])
-    #     self.assertEqual(parser.port, 3000)
+    def test_parse_args(self):
+        parser = parse_args([])
+        self.assertEqual(parser.port, 8080)
+        parser = parse_args(["--host", "0.0.0.0"])
+        self.assertEqual(parser.host, "0.0.0.0")
+        parser = parse_args(["--port", "3000"])
+        self.assertEqual(parser.port, 3000)
 
-    # def test_ping(self):
-    #     rv = TEST_CLIENT.get("/")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertEqual(rv.text, "pong")
-    #     self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
+    def test_ping(self):
+        rv = TEST_CLIENT.get("/")
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.text, "pong")
+        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
-    # def test_options_preflight(self):
-    #     rv = TEST_CLIENT.options("/")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
+    def test_options_preflight(self):
+        rv = TEST_CLIENT.options("/")
+        self.assertEqual(rv.status_code, 200)
+        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
-    # def test_list_datasets(self):
-    #     rv = TEST_CLIENT.get("/datasets")
-    #     result = rv.json()
-    #     self.assertIsInstance(resul
-    # def test_options_preflight(self):
-    #     rv = TEST_CLIENT.options("/")
-    #     self.assertEqual(rv.status_code, 200)
-    #     self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
-    #     self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
+    def test_list_datasets(self):
+        rv = TEST_CLIENT.get("/datasets")
+        result = rv.json()
+        self.assertIsInstance(result)
+    def test_options_preflight(self):
+        rv = TEST_CLIENT.options("/")
+        self.assertEqual(rv.status_code, 200)
+        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
+        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
-    # def test_list_datasets(self):
-    #     rv = TEST_CLIENT.get("/datasets")
-    #     result = rv.json()
-    #     self.assertIsInstance(result, list)
+    def test_list_datasets(self):
+        rv = TEST_CLIENT.get("/datasets")
+        result = rv.json()
+        self.assertIsInstance(result, list)
 
     def test_create_datasets(self):
         rv = TEST_CLIENT.post("/datasets", files={
@@ -308,170 +308,170 @@ class TestApi(TestCase):
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
 
-    # def test_list_columns(self):
-    #     rv = TEST_CLIENT.get("/datasets/UNK/columns")
+    def test_list_columns(self):
+        rv = TEST_CLIENT.get("/datasets/UNK/columns")
 
-    #     result = rv.json()
-    #     expected = {"message": "The specified dataset does not exist"}
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     rv = TEST_CLIENT.post("/datasets", files={
-    #         "file": (
-    #             "iris.data",
-    #             open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
-    #             "multipart/form-data"
-    #             )
-    #         }
-    #     )
-    #     name = rv.json().get("name")
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
 
-    #     rv = TEST_CLIENT.get(f"/datasets/{name}/columns")
-    #     result = rv.json()
-    #     expected = [
-    #         {"name": "col0", "featuretype": "DateTime"},
-    #         {"name": "col1", "featuretype": "Numerical"},
-    #         {"name": "col2", "featuretype": "Numerical"},
-    #         {"name": "col3", "featuretype": "Numerical"},
-    #         {"name": "col4", "featuretype": "Numerical"},
-    #         {"name": "col5", "featuretype": "Categorical"},
-    #     ]
+        rv = TEST_CLIENT.get(f"/datasets/{name}/columns")
+        result = rv.json()
+        expected = [
+            {"name": "col0", "featuretype": "DateTime"},
+            {"name": "col1", "featuretype": "Numerical"},
+            {"name": "col2", "featuretype": "Numerical"},
+            {"name": "col3", "featuretype": "Numerical"},
+            {"name": "col4", "featuretype": "Numerical"},
+            {"name": "col5", "featuretype": "Categorical"},
+        ]
 
-    #     self.assertListEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+        self.assertListEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    # def test_update_column(self):
-    #     rv = TEST_CLIENT.patch("/datasets/UNK/columns/col0", json={"featuretype": "Numerical"})
-    #     result = rv.json()
-    #     expected = {"message": "The specified dataset does not exist"}
+    def test_update_column(self):
+        rv = TEST_CLIENT.patch("/datasets/UNK/columns/col0", json={"featuretype": "Numerical"})
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     rv = TEST_CLIENT.post("/datasets", files={
-    #         "file": (
-    #             "iris.data",
-    #             open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
-    #             "multipart/form-data"
-    #             )
-    #         }
-    #     )
-    #     name = rv.json().get("name")
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
 
-    #     rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
-    #     result = rv.json()
-    #     expected = {"message": "The specified column does not exist"}
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
+        result = rv.json()
+        expected = {"message": "The specified column does not exist"}
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Invalid"})
-    #     result = rv.json()
-    #     expected = {"message": "featuretype must be one of DateTime, Numerical, Categorical"}
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Invalid"})
+        result = rv.json()
+        expected = {"message": "featuretype must be one of DateTime, Numerical, Categorical"}
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 400)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 400)
 
-    #     rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Numerical"})
-    #     result = rv.json()
-    #     expected = {
-    #         "name": "col0",
-    #         "featuretype": "Numerical"
-    #     }
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/col0", json={"featuretype": "Numerical"})
+        result = rv.json()
+        expected = {
+            "name": "col0",
+            "featuretype": "Numerical"
+        }
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    #     rv = TEST_CLIENT.post("/datasets", files={
-    #         "file": (
-    #             "image.gif",
-    #             open(MOCKED_DATASET_PATH_GIF, "rb"),
-    #             "multipart/form-data"
-    #             )
-    #         }
-    #     )
-    #     name = rv.json().get("name")
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "image.gif",
+                open(MOCKED_DATASET_PATH_GIF, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
 
-    #     rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
+        rv = TEST_CLIENT.patch(f"/datasets/{name}/columns/unk", json={"featuretype": "Numerical"})
 
-    #     result = rv.json()
-    #     expected = {"message": "The specified column does not exist"}
+        result = rv.json()
+        expected = {"message": "The specified column does not exist"}
 
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    # def test_patch_dataset(self):
-    #     rv = TEST_CLIENT.patch("/datasets/UNK", files={
-    #         "featuretypes": (
-    #             "featuretypes.txt",
-    #             open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
-    #             "multipart/form-data"
-    #         )
-    #         }
-    #     )
-    #     result = rv.json()
-    #     expected = {"message": "The specified dataset does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+    def test_patch_dataset(self):
+        rv = TEST_CLIENT.patch("/datasets/UNK", files={
+            "featuretypes": (
+                "featuretypes.txt",
+                open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
+                "multipart/form-data"
+            )
+            }
+        )
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     rv = TEST_CLIENT.post("/datasets", files={
-    #         "file": (
-    #             "iris.data",
-    #             open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
-    #             "multipart/form-data"
-    #             )
-    #         }
-    #     )
-    #     name = rv.json().get("name")
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
 
-    #     rv = TEST_CLIENT.patch(f"/datasets/{name}", files={
-    #         "featuretypes": (
-    #             "featuretypes.txt",
-    #             open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
-    #             "multipart/form-data"
-    #         )
-    #         }
-    #     )
-    #     result = rv.json()
-    #     expected = {
-    #             "columns": [
-    #                 {"name": "col0", "featuretype": "DateTime"},
-    #                 {"name": "col1", "featuretype": "Numerical"},
-    #                 {"name": "col2", "featuretype": "Numerical"},
-    #                 {"name": "col3", "featuretype": "Numerical"},
-    #                 {"name": "col4", "featuretype": "Numerical"},
-    #                 {"name": "col5", "featuretype": "Categorical"},
-    #             ],
-    #             "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
-    #                      ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
-    #                      ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
-    #             "filename": "iris.data",
-    #             "name": name,
-    #             "total": 3
-    #         }
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.patch(f"/datasets/{name}", files={
+            "featuretypes": (
+                "featuretypes.txt",
+                open(MOCKED_DATASET_PATH_FEATURETYPE, "rb"),
+                "multipart/form-data"
+            )
+            }
+        )
+        result = rv.json()
+        expected = {
+                "columns": [
+                    {"name": "col0", "featuretype": "DateTime"},
+                    {"name": "col1", "featuretype": "Numerical"},
+                    {"name": "col2", "featuretype": "Numerical"},
+                    {"name": "col3", "featuretype": "Numerical"},
+                    {"name": "col4", "featuretype": "Numerical"},
+                    {"name": "col5", "featuretype": "Categorical"},
+                ],
+                "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                         ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                         ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+                "filename": "iris.data",
+                "name": name,
+                "total": 3
+            }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
 
-    # def test_get_dataset_featuretypes(self):
-    #     rv = TEST_CLIENT.get("/datasets/UNK/featuretypes")
-    #     result = rv.json()
-    #     expected = {"message": "The specified dataset does not exist"}
-    #     self.assertDictEqual(expected, result)
-    #     self.assertEqual(rv.status_code, 404)
+    def test_get_dataset_featuretypes(self):
+        rv = TEST_CLIENT.get("/datasets/UNK/featuretypes")
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
 
-    #     rv = TEST_CLIENT.post("/datasets", files={
-    #         "file": (
-    #             "iris.data",
-    #             open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
-    #             "multipart/form-data"
-    #             )
-    #         }
-    #     )
-    #     name = rv.json().get("name")
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
 
-    #     rv = TEST_CLIENT.get(f"/datasets/{name}/featuretypes")
-    #     result = rv.text
-    #     expected = b'DateTime\nNumerical\nNumerical\nNumerical\nNumerical\nCategorical'
-    #     self.assertEqual(expected, expected)
-    #     self.assertEqual(rv.status_code, 200)
+        rv = TEST_CLIENT.get(f"/datasets/{name}/featuretypes")
+        result = rv.text
+        expected = b'DateTime\nNumerical\nNumerical\nNumerical\nNumerical\nCategorical'
+        self.assertEqual(expected, expected)
+        self.assertEqual(rv.status_code, 200)
