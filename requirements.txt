@@ -5,7 +5,7 @@ uvicorn==0.13.3
 # Streaming multipart parser
 python-multipart==0.0.5
 # PlatIAgro SDK
-platiagro @ git+https://github.com/platiagro/sdk.git@feature/creating-get_dataset-function
+platiagro @ git+https://github.com/platiagro/sdk.git@master
 # Character Encoding Detector
 chardet==3.0.4
 # Data analysis and manipulation tool (required for infer_compression)
