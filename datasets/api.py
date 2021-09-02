@@ -5,6 +5,8 @@ import os
 import sys
 from typing import Optional
 
+import asyncio
+
 import uvicorn
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
@@ -57,7 +59,7 @@ async def handle_list_datasets():
 
 
 @app.post("/datasets")
-async def handle_post_datasets(request: Request,
+def handle_post_datasets(request: Request,
                                file: Optional[UploadFile] = File(None)):
     """
     Handles POST requests to /datasets.
@@ -70,7 +72,8 @@ async def handle_post_datasets(request: Request,
         return create_dataset(file)
 
     try:
-        kwargs = await request.json()
+        print(request)
+        kwargs = asyncio.run(request.json())
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
 
         if kwargs:
@@ -195,8 +198,8 @@ async def handle_dataset_download(name: str):
                 break
             yield bytes_read
    
-    contents = generator(minio_response)
-    response = StreamingResponse(contents, media_type="application/x-zip-compressed")
+    streaming_contents = generator(minio_response)
+    response = StreamingResponse(streaming_contents, media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; filename={name}"
     return response   
 
