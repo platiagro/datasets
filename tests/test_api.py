@@ -327,7 +327,8 @@ class TestApi(TestCase):
                          b'"01/01/2002",4.7,3.2,1.3,0.2,"Iris-setosa"\n',
                          b'"01/01/2003",4.6,3.1,1.5,0.2,"Iris-setosa"']
 
-        self.assertListEqual(expected_lines, result.readlines())
+        for expected_line in expected_lines:
+            self.assertEqual(expected_line, result.readline())
 
     def test_list_columns(self):
         rv = TEST_CLIENT.get("/datasets/UNK/columns")

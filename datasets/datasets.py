@@ -17,6 +17,8 @@ from oauth2client import client, GOOGLE_TOKEN_URI
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
+from fastapi.responses import StreamingResponse
+
 
 from datasets import monkeypatch  # noqa: F401
 from datasets.exceptions import BadRequest, NotFound
@@ -25,6 +27,7 @@ from datasets.utils import data_pagination
 
 NOT_FOUND = NotFound("The specified dataset does not exist")
 SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
+CHUNK_SIZE = 1024
 
 
 def list_datasets():
@@ -222,6 +225,29 @@ def get_dataset(name, page=1, page_size=10):
     except ValueError:
         raise BadRequest("Invalid parameters")
 
+def download_dataset(name:str):
+
+    try:
+        minio_response = platiagro.get_dataset(name)
+    except FileNotFoundError:
+        raise NOT_FOUND
+    except ValueError:
+        raise BadRequest("Invalid parameters")
+
+     # Makes a generator to perform lazy evaluation
+    def generator(filelike_response, chunk_size=CHUNK_SIZE):
+        """Lazy function (generator) to read a file piece by piece."""
+
+        while True:
+            bytes_read = filelike_response.read(chunk_size)
+            if not bytes_read:
+                break
+            yield bytes_read
+   
+    streaming_contents = generator(minio_response)
+    response = StreamingResponse(streaming_contents, media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename={name}"
+    return response 
 
 def patch_dataset(name, file_object):
     """
