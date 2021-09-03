@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
 os.environ["ENABLE_CORS"] = "1"
+
 from unittest import TestCase
+
 from fastapi.testclient import TestClient
+
 from datasets.api import app, parse_args
+
 
 MOCKED_DATASET_PATH = "tests/resources/dataset.csv"
 MOCKED_DATASET_PATH_GIF = "tests/resources/image.gif"
@@ -33,18 +37,6 @@ class TestApi(TestCase):
         self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
         self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
 
-    def test_options_preflight(self):
-        rv = TEST_CLIENT.options("/")
-        self.assertEqual(rv.status_code, 200)
-        self.assertTrue("Access-Control-Allow-Origin" in rv.headers)
-        self.assertTrue("Access-Control-Allow-Methods" in rv.headers)
-        self.assertTrue("Access-Control-Allow-Headers" in rv.headers)
-
-    def test_list_datasets(self):
-        rv = TEST_CLIENT.get("/datasets")
-        result = rv.json()
-        self.assertIsInstance(result)
-        
     def test_options_preflight(self):
         rv = TEST_CLIENT.options("/")
         self.assertEqual(rv.status_code, 200)
@@ -308,25 +300,26 @@ class TestApi(TestCase):
         del result["name"]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-        
+
     def test_download_dataset(self):
-        # non-existent dataset        
+        # non-existent dataset
         rv = TEST_CLIENT.get("/datasets/UNK/downloads")
         result = rv.json()
         expected = {"message": "The specified dataset does not exist"}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 404)
-      
-        # valid download request  
+
+        # valid download request
         rv = TEST_CLIENT.get(f"/datasets/iris.data/downloads", stream=True)
 
         # remember! this is a streaming response!
         result = rv.raw
-        expected_lines =[b'"01/01/2000",5.1,3.5,1.4,0.2,"Iris-setosa"\n',
-                         b'"01/01/2001",4.9,3.0,1.4,0.2,"Iris-setosa"\n',
-                         b'"01/01/2002",4.7,3.2,1.3,0.2,"Iris-setosa"\n',
-                         b'"01/01/2003",4.6,3.1,1.5,0.2,"Iris-setosa"']
 
+        expected_lines = [b'"01/01/2000",5.1,3.5,1.4,0.2,"Iris-setosa"\n',
+                          b'"01/01/2001",4.9,3.0,1.4,0.2,"Iris-setosa"\n',
+                          b'"01/01/2002",4.7,3.2,1.3,0.2,"Iris-setosa"\n',
+                          b'"01/01/2003",4.6,3.1,1.5,0.2,"Iris-setosa"']
+        # be aware that readline() is a iterable method
         for expected_line in expected_lines:
             self.assertEqual(expected_line, result.readline())
 
