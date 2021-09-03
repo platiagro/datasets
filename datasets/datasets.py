@@ -225,7 +225,8 @@ def get_dataset(name, page=1, page_size=10):
     except ValueError:
         raise BadRequest("Invalid parameters")
 
-def download_dataset(name:str):
+
+def download_dataset(name: str):
 
     try:
         minio_response = platiagro.get_dataset(name)
@@ -234,20 +235,20 @@ def download_dataset(name:str):
     except ValueError:
         raise BadRequest("Invalid parameters")
 
-     # Makes a generator to perform lazy evaluation
+    # Makes a generator to perform lazy evaluation
     def generator(filelike_response, chunk_size=CHUNK_SIZE):
         """Lazy function (generator) to read a file piece by piece."""
-
         while True:
             bytes_read = filelike_response.read(chunk_size)
             if not bytes_read:
                 break
             yield bytes_read
-   
+
     streaming_contents = generator(minio_response)
     response = StreamingResponse(streaming_contents, media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; filename={name}"
-    return response 
+    return response
+
 
 def patch_dataset(name, file_object):
     """
