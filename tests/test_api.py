@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from datasets.api import app, parse_args
 from platiagro.util import BUCKET_NAME, MINIO_CLIENT
-
+from minio.error import S3Error
 
 MOCKED_DATASET_PATH = "tests/resources/dataset.csv"
 MOCKED_DATASET_PATH_GIF = "tests/resources/image.gif"
@@ -26,10 +26,16 @@ TEST_CLIENT = TestClient(app)
 class TestApi(TestCase):
     maxDiff = None
     def setUp(self):
+        try:
+            MINIO_CLIENT.make_bucket(BUCKET_NAME)
+        except S3Error as err:
+            if err.code == "BucketAlreadyOwnedByYou":
+                pass
         
         # storing in the Minio, dataset to be used in the test_download_dataset 
         data = open(MOCKED_DATASET_FOR_DOWNLOAD, "rb")
-        path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download/dataset_for_download"
+        path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download.data/dataset_for_download.data"
+       
         # uploads raw data to MinIO
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
@@ -164,7 +170,162 @@ class TestApi(TestCase):
         expected = {'message': 'Invalid token: client unauthorized'}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
+  
+  
+    def test_get_dataset(self):
+        rv = TEST_CLIENT.get("/datasets/UNK")
+        result = rv.json()
+        expected = {"message": "The specified dataset does not exist"}
 
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.post("/datasets", files={
+            "file": (
+                "iris.data",
+                open(MOCKED_DATASET_NO_HEADER_PATH, "rb"),
+                "multipart/form-data"
+                )
+            }
+        )
+        name = rv.json().get("name")
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}")
+        result = rv.json()
+
+        expected = {
+            "columns": [
+                {"name": "col0", "featuretype": "DateTime"},
+                {"name": "col1", "featuretype": "Numerical"},
+                {"name": "col2", "featuretype": "Numerical"},
+                {"name": "col3", "featuretype": "Numerical"},
+                {"name": "col4", "featuretype": "Numerical"},
+                {"name": "col5", "featuretype": "Categorical"},
+            ],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                     ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+            "filename": "iris.data",
+            "total": 3
+        }
+
+        self.assertIn("name", result)
+        del result["name"]
+
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=1&page_size=2")
+        result = rv.json()
+        expected = {
+            "columns": [
+                {"name": "col0", "featuretype": "DateTime"},
+                {"name": "col1", "featuretype": "Numerical"},
+                {"name": "col2", "featuretype": "Numerical"},
+                {"name": "col3", "featuretype": "Numerical"},
+                {"name": "col4", "featuretype": "Numerical"},
+                {"name": "col5", "featuretype": "Categorical"},
+            ],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
+            "filename": "iris.data",
+            "total": 3
+        }
+        del result["name"]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=1&page_size=3")
+        result = rv.json()
+        expected = {
+            "columns": [
+                {"name": "col0", "featuretype": "DateTime"},
+                {"name": "col1", "featuretype": "Numerical"},
+                {"name": "col2", "featuretype": "Numerical"},
+                {"name": "col3", "featuretype": "Numerical"},
+                {"name": "col4", "featuretype": "Numerical"},
+                {"name": "col5", "featuretype": "Categorical"},
+            ],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                     ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+            "filename": "iris.data",
+            "total": 3
+        }
+        del result["name"]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        rv = TEST_CLIENT.get("/datasets/iris.data?page=15&page_size=2")
+        result = rv.json()
+        expected = {'message': 'The specified page does not exist'}
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 404)
+
+        rv = TEST_CLIENT.get(f"/datasets/{name}?page=A&page_size=2")
+        result = rv.json()
+        expected = {
+            "detail": [
+                    {
+                        "loc": [
+                            "query",
+                            "page"
+                        ],
+                        "msg": "value is not a valid integer",
+                        "type": "type_error.integer"
+                    }
+            ]
+        }
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 422)
+
+        rv = TEST_CLIENT.get(f"/datasets/iris.data?page_size=-1")
+        result = rv.json()
+        expected = {
+            "columns": [
+                {"name": "col0", "featuretype": "DateTime"},
+                {"name": "col1", "featuretype": "Numerical"},
+                {"name": "col2", "featuretype": "Numerical"},
+                {"name": "col3", "featuretype": "Numerical"},
+                {"name": "col4", "featuretype": "Numerical"},
+                {"name": "col5", "featuretype": "Categorical"},
+            ],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa'],
+                     ['01/01/2003', 4.6, 3.1, 1.5, 0.2, 'Iris-setosa']],
+            "filename": "iris.data",
+            "total": 3
+        }
+        # name is machine-generated
+        # we assert it exists, but we don't check its value
+        self.assertIn("name", result)
+        del result["name"]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+
+        rv = TEST_CLIENT.get(f"/datasets/iris.data?page_size=-2")
+        result = rv.json()
+        expected = {
+            "columns": [
+                {"name": "col0", "featuretype": "DateTime"},
+                {"name": "col1", "featuretype": "Numerical"},
+                {"name": "col2", "featuretype": "Numerical"},
+                {"name": "col3", "featuretype": "Numerical"},
+                {"name": "col4", "featuretype": "Numerical"},
+                {"name": "col5", "featuretype": "Categorical"},
+            ],
+            "data": [['01/01/2001', 4.9, 3.0, 1.4, 0.2, 'Iris-setosa'],
+                     ['01/01/2002', 4.7, 3.2, 1.3, 0.2, 'Iris-setosa']],
+            "filename": "iris.data",
+            "total": 3
+        }
+        # name is machine-generated
+        # we assert it exists, but we don't check its value
+        self.assertIn("name", result)
+        del result["name"]
+        self.assertDictEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+ 
  
     def test_download_dataset(self):
         # non-existent dataset
