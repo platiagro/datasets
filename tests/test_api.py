@@ -5,10 +5,11 @@ os.environ["ENABLE_CORS"] = "1"
 from unittest import TestCase
 
 from fastapi.testclient import TestClient
+from minio.error import S3Error
+from platiagro.util import BUCKET_NAME, MINIO_CLIENT
 
 from datasets.api import app, parse_args
-from platiagro.util import BUCKET_NAME, MINIO_CLIENT
-from minio.error import S3Error
+
 
 MOCKED_DATASET_PATH = "tests/resources/dataset.csv"
 MOCKED_DATASET_PATH_GIF = "tests/resources/image.gif"
@@ -16,7 +17,6 @@ MOCKED_DATASET_NO_HEADER_PATH = "tests/resources/iris.data"
 MOCKED_DATASET_PATH_TITANIC = "tests/resources/titanic.csv"
 MOCKED_DATASET_PATH_FEATURETYPE = "tests/resources/featuretypes.txt"
 MOCKED_DATASET_FOR_DOWNLOAD = "tests/resources/dataset_for_download.data"
-
 PREFIX = "datasets"
 
 
@@ -25,17 +25,18 @@ TEST_CLIENT = TestClient(app)
 
 class TestApi(TestCase):
     maxDiff = None
+
     def setUp(self):
         try:
             MINIO_CLIENT.make_bucket(BUCKET_NAME)
         except S3Error as err:
             if err.code == "BucketAlreadyOwnedByYou":
                 pass
-        
-        # storing in the Minio, dataset to be used in the test_download_dataset 
+
+        # storing in the Minio, dataset to be used in the test_download_dataset
         data = open(MOCKED_DATASET_FOR_DOWNLOAD, "rb")
         path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download.data/dataset_for_download.data"
-       
+
         # uploads raw data to MinIO
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
@@ -170,8 +171,7 @@ class TestApi(TestCase):
         expected = {'message': 'Invalid token: client unauthorized'}
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 400)
-  
-  
+
     def test_get_dataset(self):
         rv = TEST_CLIENT.get("/datasets/UNK")
         result = rv.json()
@@ -325,8 +325,7 @@ class TestApi(TestCase):
         del result["name"]
         self.assertDictEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
- 
- 
+
     def test_download_dataset(self):
         # non-existent dataset
         rv = TEST_CLIENT.get("/datasets/UNK/downloads")
