@@ -94,6 +94,28 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  
+  /datasets/{name}/download:
+    get:
+      summary: "Download data with given name"
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/StreamedData"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable" 
+    
   /datasets/{name}/columns:
     get:
       summary: "List all columns and feature types."
@@ -187,14 +209,14 @@ components:
         properties:
           name:
             type: string
-    Column:
-      type: object
-      properties:
-        featuretype:
-          type: string
-          enum: [Numerical, Categorical, DateTime]
-        name:
-          type: string
+    StreamedData:
+      multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
     Data:
       type: array
       items:
@@ -206,6 +228,11 @@ components:
       items:
         oneOf:
           - $ref: "#/components/schemas/Column"
+    Columns:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Column"      
   requestBodies:
     Dataset:
       content:

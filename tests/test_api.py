@@ -36,14 +36,20 @@ class TestApi(TestCase):
         # storing in the Minio, dataset to be used in the test_download_dataset
         data = open(MOCKED_DATASET_FOR_DOWNLOAD, "rb")
         path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download.data/dataset_for_download.data"
-
-        # uploads raw data to MinIO
         MINIO_CLIENT.put_object(
             bucket_name=BUCKET_NAME,
             object_name=path.lstrip(f"{BUCKET_NAME}/"),
             data=data,
             length=-1,
             part_size=6000000,
+        )
+
+    def tearDown(self):
+        # Removing stored dataset used in the test_download_dataset
+        path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download.data/dataset_for_download.data"
+        MINIO_CLIENT.remove_object(
+            bucket_name=BUCKET_NAME,
+            object_name=path.lstrip(f"{BUCKET_NAME}/"),
         )
 
     def test_parse_args(self):
