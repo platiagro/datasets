@@ -7,6 +7,7 @@ from unittest import TestCase
 from fastapi.testclient import TestClient
 
 from datasets.api import app, parse_args
+from platiagro.util import BUCKET_NAME, MINIO_CLIENT
 
 
 MOCKED_DATASET_PATH = "tests/resources/dataset.csv"
@@ -14,22 +15,28 @@ MOCKED_DATASET_PATH_GIF = "tests/resources/image.gif"
 MOCKED_DATASET_NO_HEADER_PATH = "tests/resources/iris.data"
 MOCKED_DATASET_PATH_TITANIC = "tests/resources/titanic.csv"
 MOCKED_DATASET_PATH_FEATURETYPE = "tests/resources/featuretypes.txt"
-MOCKED_DATASET_FOR_DOWNLOAD = "tests/resources/dataset_for_test.data"
+MOCKED_DATASET_FOR_DOWNLOAD = "tests/resources/dataset_for_download.data"
+
+PREFIX = "datasets"
+
 
 TEST_CLIENT = TestClient(app)
 
 
 class TestApi(TestCase):
     maxDiff = None
-    data = open(MOCKED_DATASET_PATH, "rb")
     def setUp(self):
-        TEST_CLIENT.post("/datasets", files={
-            "file": (
-                "dataset_for_test.data",
-                open(MOCKED_DATASET_FOR_DOWNLOAD, "rb"),
-                "multipart/form-data"
-                )
-            }
+        
+        # storing in the Minio, dataset to be used in the test_download_dataset 
+        data = open(MOCKED_DATASET_FOR_DOWNLOAD, "rb")
+        path = f"{BUCKET_NAME}/{PREFIX}/dataset_for_download/dataset_for_download"
+        # uploads raw data to MinIO
+        MINIO_CLIENT.put_object(
+            bucket_name=BUCKET_NAME,
+            object_name=path.lstrip(f"{BUCKET_NAME}/"),
+            data=data,
+            length=-1,
+            part_size=6000000,
         )
 
     def test_parse_args(self):
@@ -168,7 +175,7 @@ class TestApi(TestCase):
         self.assertEqual(rv.status_code, 404)
 
         # valid download request
-        rv = TEST_CLIENT.get(f"/datasets/dataset_for_test.data/downloads", stream=True)
+        rv = TEST_CLIENT.get(f"/datasets/dataset_for_download.data/downloads", stream=True)
 
         # remember! this is a streaming response!
         result = rv.raw
