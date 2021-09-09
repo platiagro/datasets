@@ -232,12 +232,12 @@ def download_dataset(name: str):
     ----------
     name : str
         The dataset name to look for in our object storage.
-    
+
     Returns
     -------
     urllib3.response.HTTPResponse object
         Streaming response with dataset content.
-    
+
     Raises
     ------
     NotFound
