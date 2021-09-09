@@ -226,6 +226,23 @@ def get_dataset(name, page=1, page_size=10):
 
 
 def download_dataset(name: str):
+    """
+    Download dataset from our object storage.
+    Parameters
+    ----------
+    name : str
+        The dataset name to look for in our object storage.
+    
+    Returns
+    -------
+    urllib3.response.HTTPResponse object
+        Streaming response with dataset content.
+    
+    Raises
+    ------
+    NotFound
+        When the dataset does not exist.
+    """
 
     try:
         minio_response = platiagro.get_dataset(name)
