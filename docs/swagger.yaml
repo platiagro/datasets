@@ -108,7 +108,7 @@ paths:
             type: string
       responses:
         "200":
-          $ref: "#/components/responses/StreamedData"
+          $ref: "#/components/responses/StreamedResponse"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -209,14 +209,6 @@ components:
         properties:
           name:
             type: string
-    StreamedData:
-      multipart/form-data:
-          schema:
-            type: object
-            properties:
-              file:
-                type: string
-                format: binary
     Data:
       type: array
       items:
@@ -227,12 +219,15 @@ components:
       type: array
       items:
         oneOf:
-          - $ref: "#/components/schemas/Column"
-    Columns:
-      type: array
-      items:
-        oneOf:
           - $ref: "#/components/schemas/Column"      
+    Column:
+      type: object
+      properties:
+        featuretype:
+          type: string
+          enum: [Numerical, Categorical, DateTime]
+        name:
+          type: string
   requestBodies:
     Dataset:
       content:
@@ -295,6 +290,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Datasets"
+    StreamedResponse:
+      description: ""
+      content:
+        text/plain:
+          schema:
+            type: string
+            format: binary
     Column:
       description: ""
       content:
@@ -314,12 +316,7 @@ components:
           schema:
             type: string
             format: binary
-            example: |
-              Numerical
-              Numerical
-              Numerical
-              Numerical
-              Categorical
+
     Message:
       description: ""
       content:
