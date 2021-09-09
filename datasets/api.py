@@ -191,7 +191,8 @@ async def handle_download_dataset(name: str):
 
     Returns
     -------
-    str
+    urllib3.response.HTTPResponse object
+        Streaming response with dataset content.
     """
     streaming_response = download_dataset(name)
     return streaming_response   
