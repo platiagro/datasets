@@ -95,7 +95,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
   
-  /datasets/{name}/download:
+  /datasets/{name}/downloads:
     get:
       summary: "Download data with given name"
       tags:
