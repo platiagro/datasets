@@ -20,6 +20,8 @@ extras = {
         "pytest-xdist==1.31.0",
         "pytest-cov==2.8.1",
         "flake8==3.7.9",
+        "black==21.8b0",
+        "typing-extensions==3.10.0.2",
     ]
 }
 
