@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import io
+
 import pandas as pd
+from urllib3.response import HTTPResponse
 
 IRIS_DATASET_NAME = "iris.csv"
 
@@ -68,3 +71,22 @@ PNG_DATASET_NAME = "text.png"
 PNG_DATA = open(f"tests/resources/{PNG_DATASET_NAME}", "rb").read()
 
 FILE_NOT_FOUND_ERROR = FileNotFoundError("The specified dataset does not exist")
+
+
+def get_dataset_side_effect(name: str):
+    """
+    Returns a mock object when accessing bucket objects.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    HTTPResponse
+    """
+    if name.endswith(".csv"):
+        body = IRIS_DATA.encode()
+    else:
+        body = PNG_DATA
+    return HTTPResponse(body=io.BytesIO(body), preload_content=False)
