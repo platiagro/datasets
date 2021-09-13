@@ -201,6 +201,7 @@ class TestCreateDataset(unittest.TestCase):
         expected = {
             "name": dataset_name,
             "filename": dataset_name,
+            "total": 73,
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 200)
@@ -209,6 +210,6 @@ class TestCreateDataset(unittest.TestCase):
             dataset_name,
             mock.ANY,
             metadata={
-                "original-filename": util.IRIS_DATASET_NAME,
+                "original-filename": util.PREDICT_FILE_HEADER,
             },
         )
