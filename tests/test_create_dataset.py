@@ -191,7 +191,7 @@ class TestCreateDataset(unittest.TestCase):
             files={
                 "file": (
                     dataset_name,
-                    io.BytesIO(util.PREDICT_FILE_HEADER),
+                    util.PREDICT_FILE_HEADER,
                     "multipart/form-data",
                 )
             },
