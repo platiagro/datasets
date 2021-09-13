@@ -173,3 +173,42 @@ class TestCreateDataset(unittest.TestCase):
         }
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        side_effect=util.FILE_NOT_FOUND_ERROR,
+    )
+    @mock.patch(
+        "datasets.datasets.save_dataset",
+    )
+    def test_create_dataset_with_predict_file_csv(self, mock_save_dataset, mock_stat_dataset):
+        """
+        """
+        dataset_name = util.PREDICT_FILE
+
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            files={
+                "file": (
+                    dataset_name,
+                    io.BytesIO(util.PREDICT_FILE_HEADER),
+                    "multipart/form-data",
+                )
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "name": dataset_name,
+            "filename": dataset_name,
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+        mock_stat_dataset.assert_any_call(dataset_name)
+        mock_save_dataset.assert_any_call(
+            dataset_name,
+            mock.ANY,
+            metadata={
+                "original-filename": util.IRIS_DATASET_NAME,
+            },
+        )

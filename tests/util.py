@@ -68,3 +68,8 @@ PNG_DATASET_NAME = "text.png"
 PNG_DATA = open(f"tests/resources/{PNG_DATASET_NAME}", "rb").read()
 
 FILE_NOT_FOUND_ERROR = FileNotFoundError("The specified dataset does not exist")
+
+# PREDICT FILE
+PREDICT_FILE = "predict-file.csv"
+
+PREDICT_FILE_HEADER = open(f"tests/resources/{PREDICT_FILE}", "rb")
