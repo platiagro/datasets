@@ -172,7 +172,7 @@ class TestCreateDataset(unittest.TestCase):
             "message": "Invalid token: client unauthorized",
         }
         self.assertEqual(result, expected)
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 400)
 
     @mock.patch(
         "datasets.datasets.stat_dataset",
