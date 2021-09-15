@@ -242,7 +242,14 @@ def get_dataset(name, page=1, page_size=10):
 
 def get_dataset_file_mimetype(name: str):
     """
-    Download dataset from our object storage.
+    Get dataset mime-type information from stream
+
+    This function will use the magic number approach to find file type info.
+
+    You can know more about file magic number in:
+      https://gist.github.com/leommoore/f9e57ba2aa4bf197ebc5
+      http://www.micsymposium.org/mics_2005/papers/paper7.pdf
+
     Parameters
     ----------
     name : str
@@ -250,8 +257,8 @@ def get_dataset_file_mimetype(name: str):
 
     Returns
     -------
-    urllib3.response.HTTPResponse object
-        Streaming response with dataset content.
+    mimetype : str
+        Mime type information
 
     Raises
     ------
