@@ -10,6 +10,7 @@ from uuid import uuid4
 import magic
 import numpy as np
 import pandas as pd
+import csv
 import platiagro
 from chardet.universaldetector import UniversalDetector
 from fastapi.responses import StreamingResponse
@@ -425,37 +426,16 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     file.seek(0, SEEK_SET)
 
     pdread = TextIOWrapper(file, encoding=encoding)
-    df0 = pd.read_csv(
-        pdread,
-        encoding=encoding,
-        compression=compression,
-        sep=None,
-        engine="python",
-        header="infer",
-        nrows=nrows,
-    )
 
-    df0_cols = list(df0.columns)
-
-    # Check if all columns are strings and short strings(text values tend to be long)
-    column_names_checker = all([type(item) == str for item in df0_cols])
-
-    if column_names_checker:
-        column_names_checker = all([len(item) < max_characters for item in df0_cols])
-
-    # Check if any column can be turned to float
-    conversion_checker = True
-    for item in df0_cols:
-        try:
-            item = float(item)
-            conversion_checker = False
-            break
-        except ValueError:
-            pass
+    # check if the file has header.
+    sniffer = csv.Sniffer()
+    pdread.seek(0, SEEK_SET)
+    pdreadline = pdread.readline()
+    pdreadline += pdread.readline()
+    has_header = sniffer.has_header(pdreadline)
 
     # Prefix and header
-    final_checker = True if (column_names_checker and conversion_checker) else False
-    header = "infer" if final_checker else None
+    header = "infer" if has_header else None
     prefix = None if header else "col"
 
     pdread.seek(0, SEEK_SET)
