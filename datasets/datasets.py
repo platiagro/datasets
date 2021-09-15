@@ -30,9 +30,6 @@ CHUNK_SIZE = 1024
 MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE = 5 * 1024  # bytes
 
 
-MIME_TYPES = {"csv": "text/csv", "png": "image/png"}
-
-
 def list_datasets():
     """
     Lists all datasets from our object storage.
