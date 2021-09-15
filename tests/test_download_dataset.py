@@ -48,7 +48,8 @@ class TestDownloadDataset(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertTrue(hasattr(rv.raw, "read"))
         self.assertIn(
-            rv.headers["content-type"], ["text/csv", "application/octet-stream"]
+            rv.headers["content-type"],
+            ["text/csv", "text/csv; charset=utf-8", "application/octet-stream"],
         )
         mock_get_dataset.assert_any_call(dataset_name)
 
