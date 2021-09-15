@@ -46,7 +46,10 @@ class TestDownloadDataset(unittest.TestCase):
         expected = util.IRIS_DATA
         self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.headers["content-type"], "text/csv")
+        self.assertTrue(hasattr(rv.raw, "read"))
+        self.assertIn(
+            rv.headers["content-type"], ["text/csv", "application/octet-stream"]
+        )
         mock_get_dataset.assert_any_call(dataset_name)
 
     @mock.patch(
@@ -65,5 +68,7 @@ class TestDownloadDataset(unittest.TestCase):
         expected = util.PNG_DATA
         self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-        self.assertEqual(rv.headers["content-type"], "image/png")
+        self.assertIn(
+            rv.headers["content-type"], ["image/png", "application/octet-stream"]
+        )
         mock_get_dataset.assert_any_call(dataset_name)
