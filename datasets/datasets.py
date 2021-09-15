@@ -29,6 +29,7 @@ NOT_FOUND = NotFound("The specified dataset does not exist")
 SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
 CHUNK_SIZE = 1024
 MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE = 5 * 1024  # bytes
+VALUE_ERROR_MESSAGE = "Invalid parameters"
 
 
 def list_datasets():
@@ -238,7 +239,7 @@ def get_dataset(name, page=1, page_size=10):
     except FileNotFoundError:
         raise NOT_FOUND
     except ValueError:
-        raise BadRequest("Invalid parameters")
+        raise BadRequest(VALUE_ERROR_MESSAGE)
 
 
 def get_dataset_file_mimetype(name: str):
@@ -272,7 +273,7 @@ def get_dataset_file_mimetype(name: str):
     except FileNotFoundError:
         raise NOT_FOUND
     except ValueError:
-        raise BadRequest("Invalid parameters")
+        raise BadRequest(VALUE_ERROR_MESSAGE)
 
     magic_instance = magic.Magic()
     buffer = minio_response.read(MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE)
@@ -311,7 +312,7 @@ def download_dataset(name: str):
     except FileNotFoundError:
         raise NOT_FOUND
     except ValueError:
-        raise BadRequest("Invalid parameters")
+        raise BadRequest(VALUE_ERROR_MESSAGE)
 
     mimetype = get_dataset_file_mimetype(name)
 
