@@ -272,8 +272,6 @@ def get_dataset_file_mimetype(name: str):
         minio_response = platiagro.get_dataset(name)
     except FileNotFoundError:
         raise NOT_FOUND
-    except ValueError:
-        raise BadRequest(VALUE_ERROR_MESSAGE)
 
     magic_instance = magic.Magic()
     buffer = minio_response.read(MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE)
@@ -311,8 +309,6 @@ def download_dataset(name: str):
         minio_response = platiagro.get_dataset(name)
     except FileNotFoundError:
         raise NOT_FOUND
-    except ValueError:
-        raise BadRequest(VALUE_ERROR_MESSAGE)
 
     mimetype = get_dataset_file_mimetype(name)
 
