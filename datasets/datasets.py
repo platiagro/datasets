@@ -7,7 +7,6 @@ from tempfile import SpooledTemporaryFile
 from unicodedata import normalize
 from uuid import uuid4
 
-import magic
 import numpy as np
 import pandas as pd
 import csv
@@ -242,50 +241,6 @@ def get_dataset(name, page=1, page_size=10):
         raise BadRequest(VALUE_ERROR_MESSAGE)
 
 
-def get_dataset_file_mimetype(name: str):
-    """
-    Get dataset mime-type information from stream
-
-    This function will use the magic number approach to find file type info.
-
-    You can know more about file magic number in:
-      https://gist.github.com/leommoore/f9e57ba2aa4bf197ebc5
-      http://www.micsymposium.org/mics_2005/papers/paper7.pdf
-
-    Parameters
-    ----------
-    name : str
-        The dataset name to look for in our object storage.
-
-    Returns
-    -------
-    mimetype : str
-        Mime type information
-
-    Raises
-    ------
-    NotFound
-        When the dataset does not exist.
-    """
-
-    try:
-        minio_response = platiagro.get_dataset(name)
-    except FileNotFoundError:
-        raise NOT_FOUND
-
-    magic_instance = magic.Magic()
-    buffer = minio_response.read(MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE)
-    filetype_info = magic_instance.id_buffer(buffer)
-
-    if "CSV" in filetype_info:
-        return "text/csv"
-
-    if "PNG" in filetype_info:
-        return "image/png"
-
-    return "application/octet-stream"
-
-
 def download_dataset(name: str):
     """
     Download dataset from our object storage.
@@ -310,8 +265,6 @@ def download_dataset(name: str):
     except FileNotFoundError:
         raise NOT_FOUND
 
-    mimetype = get_dataset_file_mimetype(name)
-
     # Makes a generator to perform lazy evaluation
     def generator(filelike_response, chunk_size=CHUNK_SIZE):
         """Lazy function (generator) to read a file piece by piece."""
@@ -322,7 +275,9 @@ def download_dataset(name: str):
             yield bytes_read
 
     streaming_contents = generator(minio_response)
-    response = StreamingResponse(streaming_contents, media_type=mimetype)
+    response = StreamingResponse(
+        streaming_contents, media_type="application/octet-stream"
+    )
     response.headers["Content-Disposition"] = f"attachment; filename={name}"
     return response
 

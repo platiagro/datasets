@@ -47,9 +47,9 @@ class TestDownloadDataset(unittest.TestCase):
         self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
         self.assertTrue(hasattr(rv.raw, "read"))
-        self.assertIn(
+        self.assertEqual(
             rv.headers["content-type"],
-            ["text/csv", "text/csv; charset=utf-8", "application/octet-stream"],
+            "application/octet-stream",
         )
         mock_get_dataset.assert_any_call(dataset_name)
 
@@ -69,7 +69,5 @@ class TestDownloadDataset(unittest.TestCase):
         expected = util.PNG_DATA
         self.assertEqual(expected, result)
         self.assertEqual(rv.status_code, 200)
-        self.assertIn(
-            rv.headers["content-type"], ["image/png", "application/octet-stream"]
-        )
+        self.assertEqual(rv.headers["content-type"], "application/octet-stream")
         mock_get_dataset.assert_any_call(dataset_name)
