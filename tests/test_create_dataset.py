@@ -24,7 +24,8 @@ class TestCreateDataset(unittest.TestCase):
     )
     def test_create_dataset_with_iris_csv(self, mock_save_dataset, mock_stat_dataset):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given file, filename, and metadata
+        (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.IRIS_DATASET_NAME
 

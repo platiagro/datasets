@@ -94,6 +94,28 @@ paths:
           $ref: "#/components/responses/InternalServerError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  
+  /datasets/{name}/downloads:
+    get:
+      summary: "Download data with given name"
+      tags:
+        - "Datasets"
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/StreamedResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable" 
+    
   /datasets/{name}/columns:
     get:
       summary: "List all columns and feature types."
@@ -187,14 +209,6 @@ components:
         properties:
           name:
             type: string
-    Column:
-      type: object
-      properties:
-        featuretype:
-          type: string
-          enum: [Numerical, Categorical, DateTime]
-        name:
-          type: string
     Data:
       type: array
       items:
@@ -205,7 +219,15 @@ components:
       type: array
       items:
         oneOf:
-          - $ref: "#/components/schemas/Column"
+          - $ref: "#/components/schemas/Column"      
+    Column:
+      type: object
+      properties:
+        featuretype:
+          type: string
+          enum: [Numerical, Categorical, DateTime]
+        name:
+          type: string
   requestBodies:
     Dataset:
       content:
@@ -268,6 +290,13 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Datasets"
+    StreamedResponse:
+      description: ""
+      content:
+        text/plain:
+          schema:
+            type: string
+            format: binary
     Column:
       description: ""
       content:
@@ -287,12 +316,7 @@ components:
           schema:
             type: string
             format: binary
-            example: |
-              Numerical
-              Numerical
-              Numerical
-              Numerical
-              Categorical
+
     Message:
       description: ""
       content:

@@ -5,16 +5,22 @@ import os
 import sys
 from typing import Optional
 
+import asyncio
+
 import uvicorn
 from fastapi import FastAPI, Request, File, UploadFile
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import StreamingResponse
+
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
 from datasets.datasets import list_datasets, create_dataset, create_google_drive_dataset, \
-    get_dataset, get_featuretypes, patch_dataset
+    get_dataset, download_dataset, get_featuretypes, patch_dataset
 from datasets.utils import to_snake_case
 from datasets.exceptions import BadRequest, NotFound, InternalServerError
+
+
 
 app = FastAPI(
     title="PlatIAgro Datasets",
@@ -49,11 +55,19 @@ async def handle_list_datasets():
 
 
 @app.post("/datasets")
-async def handle_post_datasets(request: Request,
-                               file: Optional[UploadFile] = File(None)):
+def handle_post_datasets(request: Request, file: Optional[UploadFile] = File(None)):
     """
     Handles POST requests to /datasets.
 
+    obs: As you can see, this function instead of being asynchronous is synchronous.
+    This change was necessary to correct a bug, in which the file, which is by the way
+    a SpooledTemporaryFile, was losing from memory, and because of this, MINIOCLIENT was 
+    unable to perform the put object command. Putting as synchronous solved this problem,
+    probably the error is due to the way the asynchronous function is being erroneously 
+    used in synchronous situations. Follow the link regarding file upload using FastAPI:
+    
+    https://github.com/tiangolo/fastapi/blob/master/docs/en/docs/tutorial/request-files.md#:~:text=File%20parameters%20with%20UploadFile
+    
     Returns
     -------
     str
@@ -62,13 +76,18 @@ async def handle_post_datasets(request: Request,
         return create_dataset(file)
 
     try:
-        kwargs = await request.json()
+        # request methods in fastapi are async by implementation
+        # so, to be able to use inside a sync function we had to use this way
+        kwargs = asyncio.run(request.json())
+        
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
-
         if kwargs:
             return create_google_drive_dataset(**kwargs)
     except RuntimeError:
         raise BadRequest("No file part.")
+        
+
+
 
 
 @app.get("/datasets/{name}")
@@ -160,6 +179,23 @@ async def handle_get_featuretypes(dataset: str):
     headers = {"Content-Type": "text/plain",
                "Content-Disposition": "attachment; filename=featuretypes.txt"}
     return Response(content=featuretypes, headers=headers)
+
+@app.get("/datasets/{name}/downloads", response_class=StreamingResponse)
+async def handle_download_dataset(name: str):
+    """
+    Handles GET requests to "/datasets/{dataset}/downloads.
+
+    Parameters
+    ----------
+    dataset : str
+
+    Returns
+    -------
+    urllib3.response.HTTPResponse object
+        Streaming response with dataset content.
+    """
+    streaming_response = download_dataset(name)
+    return streaming_response   
 
 
 @app.exception_handler(BadRequest)

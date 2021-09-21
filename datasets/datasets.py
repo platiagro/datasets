@@ -12,20 +12,23 @@ import pandas as pd
 import csv
 import platiagro
 from chardet.universaldetector import UniversalDetector
+from fastapi.responses import StreamingResponse
 from googleapiclient.discovery import build
 from googleapiclient.http import HttpError, MediaIoBaseDownload
-from oauth2client import client, GOOGLE_TOKEN_URI
+from oauth2client import GOOGLE_TOKEN_URI, client
 from pandas.io.common import infer_compression
 from platiagro import load_dataset, save_dataset, stat_dataset, update_dataset_metadata
 from platiagro.featuretypes import infer_featuretypes, validate_featuretypes
 
 from datasets import monkeypatch  # noqa: F401
 from datasets.exceptions import BadRequest, NotFound
-
 from datasets.utils import data_pagination
 
 NOT_FOUND = NotFound("The specified dataset does not exist")
 SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
+CHUNK_SIZE = 1024
+MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE = 5 * 1024  # bytes
+VALUE_ERROR_MESSAGE = "Invalid parameters"
 
 
 def list_datasets():
@@ -38,7 +41,7 @@ def list_datasets():
         A list of all datasets.
     """
     datasets = platiagro.list_datasets()
-    return [{'name': name} for name in datasets]
+    return [{"name": name} for name in datasets]
 
 
 def create_dataset(file_object):
@@ -98,14 +101,22 @@ def create_dataset(file_object):
     # uses PlatIAgro SDK to save the dataset
     save_dataset(name, file, metadata=metadata)
 
-    columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+    columns = [
+        {"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)
+    ]
 
     # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
     df.replace(np.nan, "NaN", inplace=True, regex=True)
     df.replace(np.inf, "Inf", inplace=True, regex=True)
     df.replace(-np.inf, "-Inf", inplace=True, regex=True)
     data = df.values.tolist()
-    return {"name": name, "columns": columns, "data": data, "total": len(df.index), "filename": filename}
+    return {
+        "name": name,
+        "columns": columns,
+        "data": data,
+        "total": len(df.index),
+        "filename": filename,
+    }
 
 
 def create_google_drive_dataset(gfile):
@@ -130,12 +141,12 @@ def create_google_drive_dataset(gfile):
     NotFound
         When a file was not found.
     """
-    client_id = gfile['clientId']
-    client_secret = gfile['clientSecret']
-    file_id = gfile['id']
-    file_name = gfile['name']
-    mime_type = gfile['mimeType']
-    token = gfile['token']
+    client_id = gfile["clientId"]
+    client_secret = gfile["clientSecret"]
+    file_id = gfile["id"]
+    file_name = gfile["name"]
+    mime_type = gfile["mimeType"]
+    token = gfile["token"]
 
     credentials = client.OAuth2Credentials(
         access_token=token,
@@ -144,14 +155,15 @@ def create_google_drive_dataset(gfile):
         refresh_token=token,
         token_expiry=None,
         token_uri=GOOGLE_TOKEN_URI,
-        user_agent=None)
+        user_agent=None,
+    )
 
-    service = build('drive', 'v3', credentials=credentials)
+    service = build("drive", "v3", credentials=credentials)
 
-    if 'google' in mime_type:
-        export_mine_type = 'text/plain'
-        if 'spreadsheet' in mime_type:
-            export_mine_type = 'text/csv'
+    if "google" in mime_type:
+        export_mine_type = "text/plain"
+        if "spreadsheet" in mime_type:
+            export_mine_type = "text/csv"
         request = service.files().export(fileId=file_id, mimeType=export_mine_type)
     else:
         request = service.files().get_media(fileId=file_id)
@@ -163,11 +175,11 @@ def create_google_drive_dataset(gfile):
         while done is False:
             status, done = downloader.next_chunk()
         fh.filename = file_name
-        return create_dataset({'file': fh})
+        return create_dataset({"file": fh})
     except client.HttpAccessTokenRefreshError:
-        raise BadRequest('Invalid token: client unauthorized')
+        raise BadRequest("Invalid token: client unauthorized")
     except HttpError as e:
-        reason = json.loads(e.content).get('error').get('errors')[0].get('message')
+        reason = json.loads(e.content).get("error").get("errors")[0].get("message")
         if e.resp.status == 404:
             raise NotFound(reason)
         raise BadRequest(reason)
@@ -205,7 +217,10 @@ def get_dataset(name, page=1, page_size=10):
         if "columns" in metadata and "featuretypes" in metadata:
             columns = metadata["columns"]
             featuretypes = metadata["featuretypes"]
-            columns = [{"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)]
+            columns = [
+                {"name": col, "featuretype": ftype}
+                for col, ftype in zip(columns, featuretypes)
+            ]
             content = load_dataset(name)
             # Replaces NaN value by a text "NaN" so JSON encode doesn't fail
             content.replace(np.nan, "NaN", inplace=True, regex=True)
@@ -216,12 +231,55 @@ def get_dataset(name, page=1, page_size=10):
             if page_size != -1:
                 data = data_pagination(content=data, page=page, page_size=page_size)
 
-            dataset.update({"columns": columns, "data": data, "total": len(content.index)})
+            dataset.update(
+                {"columns": columns, "data": data, "total": len(content.index)}
+            )
         return dataset
     except FileNotFoundError:
         raise NOT_FOUND
     except ValueError:
-        raise BadRequest("Invalid parameters")
+        raise BadRequest(VALUE_ERROR_MESSAGE)
+
+
+def download_dataset(name: str):
+    """
+    Download dataset from our object storage.
+    Parameters
+    ----------
+    name : str
+        The dataset name to look for in our object storage.
+
+    Returns
+    -------
+    urllib3.response.HTTPResponse object
+        Streaming response with dataset content.
+
+    Raises
+    ------
+    NotFound
+        When the dataset does not exist.
+    """
+
+    try:
+        minio_response = platiagro.get_dataset(name)
+    except FileNotFoundError:
+        raise NOT_FOUND
+
+    # Makes a generator to perform lazy evaluation
+    def generator(filelike_response, chunk_size=CHUNK_SIZE):
+        """Lazy function (generator) to read a file piece by piece."""
+        while True:
+            bytes_read = filelike_response.read(chunk_size)
+            if not bytes_read:
+                break
+            yield bytes_read
+
+    streaming_contents = generator(minio_response)
+    response = StreamingResponse(
+        streaming_contents, media_type="application/octet-stream"
+    )
+    response.headers["Content-Disposition"] = f"attachment; filename={name}"
+    return response
 
 
 def patch_dataset(name, file_object):
@@ -259,14 +317,18 @@ def patch_dataset(name, file_object):
 
     try:
         ftype_file = file_object.file
-        featuretypes = list(map(lambda s: s.strip().decode("utf8"), ftype_file.readlines()))
+        featuretypes = list(
+            map(lambda s: s.strip().decode("utf8"), ftype_file.readlines())
+        )
         validate_featuretypes(featuretypes)
     except ValueError as e:
         raise BadRequest(str(e))
 
     columns = metadata["columns"]
     if len(columns) != len(featuretypes):
-        raise BadRequest("featuretypes must be the same length as the DataFrame columns")
+        raise BadRequest(
+            "featuretypes must be the same length as the DataFrame columns"
+        )
 
     # uses PlatIAgro SDK to update the dataset metadata
     metadata["featuretypes"] = featuretypes
@@ -359,10 +421,12 @@ def generate_name(filename, attempt=1):
     """
     # normalize filename to ASCII characters
     # replace spaces by dashes
-    name = normalize('NFKD', filename) \
-        .encode('ASCII', 'ignore') \
-        .replace(b' ', b'-') \
+    name = (
+        normalize("NFKD", filename)
+        .encode("ASCII", "ignore")
+        .replace(b" ", b"-")
         .decode()
+    )
 
     if attempt > 1:
         # adds a suffix '-NUMBER' to filename

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import io
+
 import pandas as pd
+from urllib3.response import HTTPResponse
 
 IRIS_DATASET_NAME = "iris.csv"
 
@@ -253,3 +256,23 @@ PREDICT_FILE_DATA = [
     ['ID_6319','Vereda Tropical','Flores Silvestres','Mel e Cia','Âmbar claro','23,108','30,44','33,75','4,22','7,88','0,11','0,44','14,7','0,04','0,4703','4,2','1,7916','0,167009392','7,63','829,15','8,85e-05','5,3e-05','155,58609625','0','0','1','Normal'],
     ['ID_331','Vereda Tropical','Flores Silvestres','Só Mel','Âmbar claro','21,311','26,28','41,18','2,23','8,1','0,11','0,64','15,73','0,04','0,0202','3,9','1,0015','0,262493016','11,69','1322,42','0,038438893','5,81e-05','101,45547218599998','0','0','1','Normal'],
 ]
+
+
+def get_dataset_side_effect(name: str):
+    """
+    Returns a mock object when accessing bucket objects.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    HTTPResponse
+    """
+    if name.endswith(".csv"):
+        body = IRIS_DATA.encode()
+    else:
+        body = PNG_DATA
+    return HTTPResponse(body=io.BytesIO(body), preload_content=False)
+  
