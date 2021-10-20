@@ -341,7 +341,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
     The file can be in any format (.csv, .txt, .zip, .gif,...).
-    If it's not a .csv file or a one-column .csv file it will throw an exception (pandas.errors.EmptyDataError).
+    If it's not a .csv file, it will throw an exception (pandas.errors.EmptyDataError). One-column .csv gives exception there in try...except.
 
     Parameters
     ----------
@@ -358,7 +358,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     -------
     pd.DataFrame
         The dataframe content.
-    
+
     Raises
     ------
     pandas.errors.EmptyDataError
