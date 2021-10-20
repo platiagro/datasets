@@ -69,6 +69,55 @@ class TestCreateDataset(unittest.TestCase):
     @mock.patch(
         "datasets.datasets.save_dataset",
     )
+    def test_create_dataset_with_iris_csv_one_column(
+        self, mock_save_dataset, mock_stat_dataset
+    ):
+        """
+        Should call platiagro.save_dataset using given file, filename, and metadata
+        (columns, featurestypes, total, original-filename).
+        """
+        dataset_name = util.IRIS_DATASET_NAME
+
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            files={
+                "file": (
+                    dataset_name,
+                    io.StringIO(util.IRIS_DATA_ONE_COLUMN),
+                    "multipart/form-data",
+                )
+            },
+        )
+        result = rv.json()
+        expected = {
+            "name": dataset_name,
+            "filename": dataset_name,
+            "total": len(util.IRIS_DATA_ARRAY_ONE_COLUMN),
+            "columns": util.IRIS_COLUMNS_FEATURETYPES_ONE_COLUMN,
+            "data": util.IRIS_DATA_ARRAY_ONE_COLUMN,
+        }
+
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 200)
+        mock_stat_dataset.assert_any_call(dataset_name)
+        mock_save_dataset.assert_any_call(
+            dataset_name,
+            mock.ANY,
+            metadata={
+                "columns": util.IRIS_ONE_COLUMN,
+                "featuretypes": util.IRIS_FEATURETYPES_ONE_COLUMN,
+                "original-filename": util.IRIS_DATASET_NAME,
+                "total": len(util.IRIS_DATA_ARRAY_ONE_COLUMN),
+            },
+        )
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        side_effect=util.FILE_NOT_FOUND_ERROR,
+    )
+    @mock.patch(
+        "datasets.datasets.save_dataset",
+    )
     def test_create_dataset_with_iris_csv_headerless(
         self, mock_save_dataset, mock_stat_dataset
     ):
@@ -182,7 +231,9 @@ class TestCreateDataset(unittest.TestCase):
     @mock.patch(
         "datasets.datasets.save_dataset",
     )
-    def test_create_dataset_with_predict_file_csv(self, mock_save_dataset, mock_stat_dataset):
+    def test_create_dataset_with_predict_file_csv(
+        self, mock_save_dataset, mock_stat_dataset
+    ):
         """
         Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
@@ -228,7 +279,9 @@ class TestCreateDataset(unittest.TestCase):
     @mock.patch(
         "datasets.datasets.save_dataset",
     )
-    def test_create_dataset_with_predict_file_headerless_csv(self, mock_save_dataset, mock_stat_dataset):
+    def test_create_dataset_with_predict_file_headerless_csv(
+        self, mock_save_dataset, mock_stat_dataset
+    ):
         """
         Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
         """

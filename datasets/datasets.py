@@ -340,6 +340,8 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     """
     Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
+    The file can be in any format (.csv, .txt, .zip, .gif,...).
+    If it's not a .csv file, it will throw an exception (pandas.errors.EmptyDataError). One-column .csv gives exception there in try...except.
 
     Parameters
     ----------
@@ -356,6 +358,10 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     -------
     pd.DataFrame
         The dataframe content.
+
+    Raises
+    ------
+    pandas.errors.EmptyDataError
 
     Notes
     -----
@@ -379,12 +385,18 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
 
     pdread = TextIOWrapper(file, encoding=encoding)
 
-    # check if the file has header.
-    sniffer = csv.Sniffer()
-    pdread.seek(0, SEEK_SET)
-    pdreadline = pdread.readline()
-    pdreadline += pdread.readline()
-    has_header = sniffer.has_header(pdreadline)
+    try:
+        # check if the file has header.
+        sniffer = csv.Sniffer()
+        pdread.seek(0, SEEK_SET)
+        pdreadline = pdread.readline()
+        pdreadline += pdread.readline()
+        has_header = sniffer.has_header(pdreadline)
+        sep = None
+
+    except csv.Error:
+        sep = ","
+        has_header = True
 
     # Prefix and header
     header = "infer" if has_header else None
@@ -395,7 +407,7 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
         pdread,
         encoding=encoding,
         compression=compression,
-        sep=None,
+        sep=sep,
         engine="python",
         header=header,
         nrows=nrows,
