@@ -24,7 +24,7 @@ from datasets import monkeypatch  # noqa: F401
 from datasets.exceptions import BadRequest, NotFound
 from datasets.utils import data_pagination
 
-NOT_FOUND = NotFound("The specified dataset does not exist")
+NOT_FOUND = NotFound("DatasetNotFound", "The specified dataset does not exist")
 SPOOLED_MAX_SIZE = 1024 * 1024  # 1MB
 CHUNK_SIZE = 1024
 MINIMAL_CHUNK_SIZE_TO_FIND_FILE_TYPE = 5 * 1024  # bytes
@@ -73,7 +73,7 @@ def create_dataset(file_object):
     # if user does not select file, the browser also
     # submits an empty part without filename
     if filename == "":
-        raise BadRequest("No selected file.")
+        raise BadRequest("InvalidFile", "No selected file.")
 
     # generate a dataset name from filename
     name = generate_name(filename)
@@ -177,11 +177,11 @@ def create_google_drive_dataset(gfile):
         fh.filename = file_name
         return create_dataset({"file": fh})
     except client.HttpAccessTokenRefreshError:
-        raise BadRequest("Invalid token: client unauthorized")
+        raise BadRequest("InvalidToken", "Invalid token: client unauthorized")
     except HttpError as e:
         reason = json.loads(e.content).get("error").get("errors")[0].get("message")
         if e.resp.status == 404:
-            raise NotFound(reason)
+            raise NotFound("NotFound", reason)
         raise BadRequest(reason)
 
 
@@ -207,6 +207,7 @@ def get_dataset(name, page=1, page_size=10):
     ------
     NotFound
         When the dataset does not exist.
+    BadRequest
     """
     try:
         page, page_size = int(page), int(page_size)
@@ -238,7 +239,7 @@ def get_dataset(name, page=1, page_size=10):
     except FileNotFoundError:
         raise NOT_FOUND
     except ValueError:
-        raise BadRequest(VALUE_ERROR_MESSAGE)
+        raise BadRequest("ValueError", VALUE_ERROR_MESSAGE)
 
 
 def download_dataset(name: str):
@@ -308,7 +309,7 @@ def patch_dataset(name, file_object):
         When the dataset does not exist
     """
     if not file_object.file:
-        raise BadRequest("No featuretypes part")
+        raise BadRequest("NoFeatureTypes", "No featuretypes part")
 
     try:
         metadata = stat_dataset(name)
@@ -322,11 +323,12 @@ def patch_dataset(name, file_object):
         )
         validate_featuretypes(featuretypes)
     except ValueError as e:
-        raise BadRequest(str(e))
+        raise BadRequest("ValueError", str(e))
 
     columns = metadata["columns"]
     if len(columns) != len(featuretypes):
         raise BadRequest(
+            "DifferentLengths",
             "featuretypes must be the same length as the DataFrame columns"
         )
 
@@ -341,7 +343,8 @@ def read_into_dataframe(file, filename=None, nrows=100, max_characters=50):
     Reads a file into a DataFrame.
     Infers the file encoding and whether a header column exists
     The file can be in any format (.csv, .txt, .zip, .gif,...).
-    If it's not a .csv file, it will throw an exception (pandas.errors.EmptyDataError). One-column .csv gives exception there in try...except.
+    If it's not a .csv file, it will throw an exception (pandas.errors.EmptyDataError).
+    One-column .csv gives exception there in try...except.
 
     Parameters
     ----------
