@@ -19,6 +19,7 @@ class ApiException(Exception):
         self.message = message
         self.status_code = status_code
 
+
 class BadRequest(ApiException):
     """
     Bad Request response status code indicates that the server cannot or will not
@@ -38,7 +39,6 @@ class NotFound(ApiException):
 
     def __init__(self, code: str, message: str):
         super().__init__(code, message, status_code=404)
-
 
 
 class InternalServerError(ApiException):
