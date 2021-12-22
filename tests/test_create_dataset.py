@@ -250,7 +250,7 @@ class TestCreateDataset(unittest.TestCase):
                     )
                 },
             )
-            file.close()
+         
         result = rv.json()
 
         expected = {
@@ -300,7 +300,6 @@ class TestCreateDataset(unittest.TestCase):
                     )
                 },
             )
-            file.close()
         result = rv.json()
 
         expected = {
