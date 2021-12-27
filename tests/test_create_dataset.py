@@ -238,19 +238,19 @@ class TestCreateDataset(unittest.TestCase):
         Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.PREDICT_FILE
-        with util.PREDICT_FILE_HEADER as file:
 
+        with util.PREDICT_FILE_HEADER as file:
             rv = TEST_CLIENT.post(
                 "/datasets",
                 files={
                     "file": (
                         dataset_name,
-                        file,
+                        file.read(),
                         "multipart/form-data",
                     )
                 },
             )
-         
+
         result = rv.json()
 
         expected = {
@@ -295,7 +295,7 @@ class TestCreateDataset(unittest.TestCase):
                 files={
                     "file": (
                         dataset_name,
-                        file,
+                        file.read(),
                         "multipart/form-data",
                     )
                 },
