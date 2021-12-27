@@ -44,7 +44,7 @@ def list_datasets():
     return [{"name": name} for name in datasets]
 
 
-def create_dataset(file_object):
+def create_dataset(file_object, filename):
     """
     Creates a new dataset in our object storage.
 
@@ -65,10 +65,8 @@ def create_dataset(file_object):
     """
     if isinstance(file_object, dict):
         file = file_object["file"]
-        filename = file.filename
     else:
-        file = file_object.file
-        filename = file_object.filename
+        file = file_object
 
     # if user does not select file, the browser also
     # submits an empty part without filename
