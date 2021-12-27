@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import io
+import copy
 import unittest
 import unittest.mock as mock
 
@@ -240,12 +241,13 @@ class TestCreateDataset(unittest.TestCase):
         dataset_name = util.PREDICT_FILE
 
         with util.PREDICT_FILE_HEADER as file:
+            data = copy.deepcopy(file.read())
             rv = TEST_CLIENT.post(
                 "/datasets",
                 files={
                     "file": (
                         dataset_name,
-                        file.read(),
+                        data,
                         "multipart/form-data",
                     )
                 },
@@ -289,13 +291,13 @@ class TestCreateDataset(unittest.TestCase):
         """
         dataset_name = util.PREDICT_HEADERLESS
         with util.PREDICT_FILE_HEADERLESS as file:
-
+            data = copy.deepcopy(file.read())
             rv = TEST_CLIENT.post(
                 "/datasets",
                 files={
                     "file": (
                         dataset_name,
-                        file.read(),
+                        data,
                         "multipart/form-data",
                     )
                 },
