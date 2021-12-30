@@ -87,6 +87,7 @@ async def handle_post_datasets(
                 return create_dataset(file)
             except Exception as e:
                 logging.info(e)
+                time.sleep(1)
                 i = i + 1
 
         raise InternalServerError("Not able to handle file upload")
