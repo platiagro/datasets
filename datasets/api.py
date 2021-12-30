@@ -80,18 +80,21 @@ async def handle_post_datasets(
     -------
     str
     """
-    i = 0
+    retries = 0
     if file:
-        while i < MAX_RETRIES:
+        while retries < MAX_RETRIES:
             try:
                 return create_dataset(file)
             except Exception as e:
                 logging.info(e)
-                print(e)
+                logging.info(f"Something went wrong while uploading the file")
+                logging.info(f"Retrying processing upload")
+                logging.info(f"retries: {retries} of {MAX_RETRIES}")
+                # let's wait 1 sec before tryng again!
                 time.sleep(1)
-                i = i + 1
+                retries = retries + 1
 
-    #  raise InternalServerError("Not able to handle file upload")
+        raise InternalServerError("Not able to handle file upload")
 
     try:
         # request methods in fastapi are async by implementation
