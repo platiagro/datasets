@@ -10,15 +10,25 @@ from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
-from fastapi.responses import (JSONResponse, PlainTextResponse, Response,
-                               StreamingResponse)
+from fastapi.responses import (
+    JSONResponse,
+    PlainTextResponse,
+    Response,
+    StreamingResponse,
+)
 from pydantic import BaseModel
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
-from datasets.datasets import (create_dataset, create_google_drive_dataset,
-                               download_dataset, get_dataset, get_featuretypes,
-                               list_datasets, patch_dataset)
+from datasets.datasets import (
+    create_dataset,
+    create_google_drive_dataset,
+    download_dataset,
+    get_dataset,
+    get_featuretypes,
+    list_datasets,
+    patch_dataset,
+)
 from datasets.exceptions import BadRequest, InternalServerError, NotFound
 from datasets.utils import to_snake_case
 
@@ -75,6 +85,7 @@ async def handle_post_datasets(
             return create_dataset(file)
         except Exception as e:
             logging.info(e)
+            print(e)
             raise InternalServerError("Not able to handle file upload")
 
     try:

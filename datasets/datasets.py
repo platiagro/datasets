@@ -100,7 +100,7 @@ def create_dataset(file_object):
             "original-filename": filename,
             "total": len(df.index),
         }
-
+        buffer.seek(0, SEEK_SET)
         save_dataset(name, buffer, metadata=metadata)
 
     columns = [
