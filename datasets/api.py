@@ -1,35 +1,26 @@
 # -*- coding: utf-8 -*-
 """ASGI server."""
 import argparse
+import asyncio
+import logging
 import os
 import sys
-import tempfile
-
+import time
 from typing import Optional
 
-import asyncio
-
 import uvicorn
-from fastapi import FastAPI, Request, File, UploadFile
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.responses import (JSONResponse, PlainTextResponse, Response,
+                               StreamingResponse)
 from pydantic import BaseModel
-
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
-from datasets.datasets import (
-    list_datasets,
-    create_dataset,
-    create_google_drive_dataset,
-    get_dataset,
-    download_dataset,
-    get_featuretypes,
-    patch_dataset,
-)
+from datasets.datasets import (create_dataset, create_google_drive_dataset,
+                               download_dataset, get_dataset, get_featuretypes,
+                               list_datasets, patch_dataset)
+from datasets.exceptions import BadRequest, InternalServerError, NotFound
 from datasets.utils import to_snake_case
-from datasets.exceptions import BadRequest, NotFound, InternalServerError
-
 
 app = FastAPI(
     title="PlatIAgro Datasets",
@@ -38,9 +29,7 @@ app = FastAPI(
     version=__version__,
 )
 
-
-class DatasetPostSchema(BaseModel):
-    file: bytes = File(None)
+MAX_RETRIES = 10
 
 
 @app.get("/", response_class=PlainTextResponse)
@@ -75,13 +64,6 @@ async def handle_post_datasets(
     """
     Handles POST requests to /datasets.
 
-    obs: As you can see, this function instead of being asynchronous is synchronous.
-    This change was necessary to correct a bug, in which the file, which is by the way
-    a SpooledTemporaryFile, was losing from memory, and because of this, MINIOCLIENT was
-    unable to perform the put object command. Putting as synchronous solved this problem,
-    probably the error is due to the way the asynchronous function is being erroneously
-    used in synchronous situations. Follow the link regarding file upload using FastAPI:
-
     https://github.com/tiangolo/fastapi/blob/master/docs/en/docs/tutorial/request-files.md#:~:text=File%20parameters%20with%20UploadFile
 
     Returns
@@ -89,9 +71,11 @@ async def handle_post_datasets(
     str
     """
     if file:
-        filename = file.filename
-        with tempfile.TemporaryFile() as f:
-            return create_dataset(f, filename=filename)
+        try:
+            return create_dataset(file)
+        except Exception as e:
+            logging.info(e)
+            raise InternalServerError("Not able to handle file upload")
 
     try:
         # request methods in fastapi are async by implementation

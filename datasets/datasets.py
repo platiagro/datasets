@@ -3,7 +3,8 @@ import json
 from io import TextIOWrapper
 from os import SEEK_SET
 from os.path import splitext
-from tempfile import SpooledTemporaryFile
+import shutil
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 from unicodedata import normalize
 from uuid import uuid4
 
@@ -44,7 +45,7 @@ def list_datasets():
     return [{"name": name} for name in datasets]
 
 
-def create_dataset(file_object, filename):
+def create_dataset(file_object):
     """
     Creates a new dataset in our object storage.
 
@@ -65,39 +66,42 @@ def create_dataset(file_object, filename):
     """
     if isinstance(file_object, dict):
         file = file_object["file"]
+        filename = file.filename
     else:
-        file = file_object
+        file = file_object.file
+        filename = file_object.filename
 
-    # if user does not select file, the browser also
-    # submits an empty part without filename
-    if filename == "":
-        raise BadRequest("No selected file.")
+    with NamedTemporaryFile() as buffer:
+        shutil.copyfileobj(file, buffer)
 
-    # generate a dataset name from filename
-    name = generate_name(filename)
+        # if user does not select file, the browser also
+        # submits an empty part without filename
+        if filename == "":
+            raise BadRequest("No selected file.")
 
-    try:
-        # reads file into a DataFrame
-        df = read_into_dataframe(file, filename)
-    except Exception:
-        # if read fails, then uploads raw file
-        file.seek(0, SEEK_SET)
-        save_dataset(name, file, metadata={"original-filename": filename})
-        return {"name": name, "filename": filename}
+        # generate a dataset name from filename
+        name = generate_name(filename)
 
-    columns = df.columns.values.tolist()
-    featuretypes = infer_featuretypes(df)
+        try:
+            # reads file into a DataFrame
+            df = read_into_dataframe(buffer, filename)
+        except UnicodeDecodeError:
+            # if read fails, then uploads raw file
+            buffer.seek(0, SEEK_SET)
+            save_dataset(name, buffer, metadata={"original-filename": filename})
+            return {"name": name, "filename": filename}
 
-    metadata = {
-        "columns": columns,
-        "featuretypes": featuretypes,
-        "original-filename": filename,
-        "total": len(df.index),
-    }
+        columns = df.columns.values.tolist()
+        featuretypes = infer_featuretypes(df)
 
-    file.seek(0, SEEK_SET)
-    # uses PlatIAgro SDK to save the dataset
-    save_dataset(name, file, metadata=metadata)
+        metadata = {
+            "columns": columns,
+            "featuretypes": featuretypes,
+            "original-filename": filename,
+            "total": len(df.index),
+        }
+
+        save_dataset(name, buffer, metadata=metadata)
 
     columns = [
         {"name": col, "featuretype": ftype} for col, ftype in zip(columns, featuretypes)
