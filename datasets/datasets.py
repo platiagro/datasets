@@ -71,6 +71,7 @@ def create_dataset(file_object):
         file = file_object.file
         filename = file_object.filename
 
+    file.seek(0, SEEK_SET)
     with NamedTemporaryFile() as buffer:
         shutil.copyfileobj(file, buffer)
 
