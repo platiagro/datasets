@@ -99,7 +99,7 @@ async def handle_post_datasets(
     try:
         # request methods in fastapi are async by implementation
         # so, to be able to use inside a sync function we had to use this way
-        kwargs = asyncio.run(request.json())
+        kwargs = request.json()
 
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
         if kwargs:
