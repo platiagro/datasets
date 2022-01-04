@@ -1,32 +1,45 @@
 # -*- coding: utf-8 -*-
 """ASGI server."""
 import argparse
+import asyncio
+import logging
 import os
 import sys
+import time
 from typing import Optional
 
-import asyncio
-
 import uvicorn
-from fastapi import FastAPI, Request, File, UploadFile
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
-from fastapi.responses import StreamingResponse
-
+from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.responses import (
+    JSONResponse,
+    PlainTextResponse,
+    Response,
+    StreamingResponse,
+)
+from pydantic import BaseModel
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
-from datasets.datasets import list_datasets, create_dataset, create_google_drive_dataset, \
-    get_dataset, download_dataset, get_featuretypes, patch_dataset
+from datasets.datasets import (
+    create_dataset,
+    create_google_drive_dataset,
+    download_dataset,
+    get_dataset,
+    get_featuretypes,
+    list_datasets,
+    patch_dataset,
+)
+from datasets.exceptions import BadRequest, InternalServerError, NotFound
 from datasets.utils import to_snake_case
-from datasets.exceptions import BadRequest, NotFound, InternalServerError
-
 
 app = FastAPI(
     title="PlatIAgro Datasets",
     description="These are the docs for PlatIAgro Datasets API."
-                "The endpoints below are usually accessed by the PlatIAgro Web-UI",
+    "The endpoints below are usually accessed by the PlatIAgro Web-UI",
     version=__version__,
 )
+
+MAX_RETRIES = 10
 
 
 @app.get("/", response_class=PlainTextResponse)
@@ -54,16 +67,12 @@ async def handle_list_datasets():
 
 
 @app.post("/datasets")
-def handle_post_datasets(request: Request, file: Optional[UploadFile] = File(None)):
+async def handle_post_datasets(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+):
     """
     Handles POST requests to /datasets.
-
-    obs: As you can see, this function instead of being asynchronous is synchronous.
-    This change was necessary to correct a bug, in which the file, which is by the way
-    a SpooledTemporaryFile, was losing from memory, and because of this, MINIOCLIENT was
-    unable to perform the put object command. Putting as synchronous solved this problem,
-    probably the error is due to the way the asynchronous function is being erroneously
-    used in synchronous situations. Follow the link regarding file upload using FastAPI:
 
     https://github.com/tiangolo/fastapi/blob/master/docs/en/docs/tutorial/request-files.md#:~:text=File%20parameters%20with%20UploadFile
 
@@ -71,19 +80,32 @@ def handle_post_datasets(request: Request, file: Optional[UploadFile] = File(Non
     -------
     str
     """
+    retries = 0
     if file:
-        return create_dataset(file)
+        while retries < MAX_RETRIES:
+            try:
+                return create_dataset(file)
+            except Exception as e:
+                logging.info(e)
+                logging.info(f"Something went wrong while uploading the file")
+                logging.info(f"Retrying processing upload")
+                logging.info(f"retries: {retries} of {MAX_RETRIES}")
+                # let's wait 1 sec before tryng again!
+                time.sleep(1)
+                retries = retries + 1
+
+        raise InternalServerError("Not able to handle file upload")
 
     try:
         # request methods in fastapi are async by implementation
         # so, to be able to use inside a sync function we had to use this way
-        kwargs = asyncio.run(request.json())
+        kwargs = await request.json()
 
         kwargs = {to_snake_case(k): v for k, v in kwargs.items()}
         if kwargs:
             return create_google_drive_dataset(**kwargs)
     except RuntimeError:
-        raise BadRequest("NoFile", "No file part.")
+        raise BadRequest("No file part.")
 
 
 @app.get("/datasets/{name}")
@@ -172,8 +194,10 @@ async def handle_get_featuretypes(dataset: str):
     str
     """
     featuretypes = get_featuretypes(dataset)
-    headers = {"Content-Type": "text/plain",
-               "Content-Disposition": "attachment; filename=featuretypes.txt"}
+    headers = {
+        "Content-Type": "text/plain",
+        "Content-Disposition": "attachment; filename=featuretypes.txt",
+    }
     return Response(content=featuretypes, headers=headers)
 
 
@@ -220,6 +244,7 @@ def enable_cors():
     """
     Enables CORS preflight requests.
     """
+
     @app.options("/{rest_of_path:path}")
     async def preflight_handler(request: Request, rest_of_path: str) -> Response:
         """
@@ -227,7 +252,9 @@ def enable_cors():
         """
         response = Response()
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers[
+            "Access-Control-Allow-Methods"
+        ] = "POST, GET, DELETE, PATCH, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         return response
 
@@ -238,7 +265,9 @@ def enable_cors():
         """
         response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PATCH, OPTIONS"
+        response.headers[
+            "Access-Control-Allow-Methods"
+        ] = "POST, GET, DELETE, PATCH, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         return response
 
@@ -253,10 +282,16 @@ def parse_args(args):
         description="Datasets API",
     )
     parser.add_argument(
-        "--host", type=str, default="127.0.0.1", help="Host for HTTP server (default: 127.0.0.1)",
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Host for HTTP server (default: 127.0.0.1)",
     )
     parser.add_argument(
-        "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)",
+        "--port",
+        type=int,
+        default=8080,
+        help="Port for HTTP server (default: 8080)",
     )
     return parser.parse_args(args)
 
