@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """ASGI server."""
 import argparse
-import asyncio
 import logging
 import os
 import sys
@@ -16,7 +15,6 @@ from fastapi.responses import (
     Response,
     StreamingResponse,
 )
-from pydantic import BaseModel
 
 from datasets import __version__
 from datasets.columns import list_columns, update_column
@@ -87,14 +85,14 @@ async def handle_post_datasets(
                 return create_dataset(file)
             except Exception as e:
                 logging.info(e)
-                logging.info(f"Something went wrong while uploading the file")
-                logging.info(f"Retrying processing upload")
+                logging.info("Something went wrong while uploading the file")
+                logging.info("Retrying processing upload")
                 logging.info(f"retries: {retries} of {MAX_RETRIES}")
                 # let's wait 1 sec before tryng again!
                 time.sleep(1)
                 retries = retries + 1
 
-        raise InternalServerError("Not able to handle file upload")
+        raise InternalServerError("FileUploadError", "Not able to handle file upload")
 
     try:
         # request methods in fastapi are async by implementation
