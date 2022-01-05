@@ -135,3 +135,87 @@ class TestGetDataset(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
         mock_stat_dataset.assert_any_call(dataset_name)
         mock_load_dataset.assert_any_call(dataset_name)
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        return_value={
+            "columns": util.IRIS_COLUMNS,
+            "featuretypes": util.IRIS_FEATURETYPES,
+            "original-filename": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        },
+    )
+    @mock.patch(
+        "datasets.datasets.load_dataset",
+        return_value=util.IRIS_DATAFRAME,
+    )
+    def test_get_dataset_iris_csv_with_page_size_minus1_and_page_1(
+        self, mock_load_dataset, mock_stat_dataset
+    ):
+        """
+        Should return all of dataset contents.
+        """
+        dataset_name = util.IRIS_DATASET_NAME
+
+        rv = TEST_CLIENT.get(f"/datasets/{dataset_name}?page=1&page_size=-1")
+        result = rv.json()
+
+        expected = {
+            "columns": util.IRIS_COLUMNS_FEATURETYPES,
+            "data": util.IRIS_DATA_ARRAY,
+            "filename": util.IRIS_DATASET_NAME,
+            "name": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        }
+        self.assertEqual(expected, result)
+        self.assertEqual(rv.status_code, 200)
+        mock_stat_dataset.assert_any_call(dataset_name)
+        mock_load_dataset.assert_any_call(dataset_name)
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        return_value={
+            "columns": util.IRIS_COLUMNS,
+            "featuretypes": util.IRIS_FEATURETYPES,
+            "original-filename": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        },
+    )
+    @mock.patch(
+        "datasets.datasets.load_dataset",
+        return_value=util.IRIS_DATAFRAME,
+    )
+    def test_get_dataset_iris_csv_with_page_size_wrong(
+        self, mock_load_dataset, mock_stat_dataset
+    ):
+        """
+        Should return page not found.
+        """
+        dataset_name = util.IRIS_DATASET_NAME
+
+        rv = TEST_CLIENT.get(f"/datasets/{dataset_name}?page=15&page_size=2")
+        self.assertEqual(rv.status_code, 404)
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        return_value={
+            "columns": util.IRIS_COLUMNS,
+            "featuretypes": util.IRIS_FEATURETYPES,
+            "original-filename": util.IRIS_DATASET_NAME,
+            "total": len(util.IRIS_DATA_ARRAY),
+        },
+    )
+    @mock.patch(
+        "datasets.datasets.load_dataset",
+        return_value=util.IRIS_DATAFRAME,
+    )
+    def test_get_dataset_iris_csv_with_page_size_invalid(
+        self, mock_load_dataset, mock_stat_dataset
+    ):
+        """
+        Should return page not found.
+        """
+        dataset_name = util.IRIS_DATASET_NAME
+
+        rv = TEST_CLIENT.get(f"/datasets/{dataset_name}?page=-42&page_size=2")
+        self.assertEqual(rv.status_code, 404)
