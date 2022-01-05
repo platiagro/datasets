@@ -16,7 +16,7 @@ IRIS_DATA = (
 
 IRIS_DATA_ONE_COLUMN = (
     "SepalLengthCm\n"
-    "5.1\n" 
+    "5.1\n"
     "4.9\n"
     "4.7\n"
     "4.6\n"
@@ -31,15 +31,15 @@ IRIS_DATA_ARRAY_ONE_COLUMN = [
 
 IRIS_COLUMNS_FEATURETYPES_ONE_COLUMN = [
     {"featuretype": "Numerical", "name": "SepalLengthCm"},
-    ]
+]
 
 IRIS_FEATURETYPES_ONE_COLUMN = [
     "Numerical",
-    ]
+]
 
 IRIS_ONE_COLUMN = [
     "SepalLengthCm",
-    ]
+]
 
 IRIS_DATA_HEADERLESS = (
     "5.1,3.5,1.4,0.2,Iris-setosa\n"
