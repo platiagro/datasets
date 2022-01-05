@@ -337,8 +337,12 @@ components:
             properties:
               message:
                 type: string
+              code:
+                type: string
+                example: "******Error"
             required:
               - message
+              - code
     NotFound:
       description: ""
       content:
@@ -349,8 +353,12 @@ components:
               message:
                 type: string
                 example: "The specified ... does not exist"
+              code:
+                type: string
+                example: "****NotFound"
             required:
               - message
+              - code
     InternalServerError:
       description: ""
       content:
@@ -361,8 +369,12 @@ components:
               message:
                 type: string
                 example: "An internal failure occurred."
+              code:
+                type: string
+                example: "******Error"
             required:
               - message
+              - code
     ServiceUnavailable:
       description: ""
       content:
