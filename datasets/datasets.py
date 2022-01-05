@@ -78,7 +78,7 @@ def create_dataset(file_object):
         # if user does not select file, the browser also
         # submits an empty part without filename
         if filename == "":
-            raise BadRequest("NoFile","No selected file.")
+            raise BadRequest("NoFile", "No selected file.")
 
         # generate a dataset name from filename
         name = generate_name(filename)
