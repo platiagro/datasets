@@ -103,7 +103,7 @@ async def handle_post_datasets(
         if kwargs:
             return create_google_drive_dataset(**kwargs)
     except RuntimeError:
-        raise BadRequest("No file part.")
+        raise BadRequest("NoFile","No file part.")
 
 
 @app.get("/datasets/{name}")

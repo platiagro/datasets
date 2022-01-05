@@ -78,7 +78,7 @@ def create_dataset(file_object):
         # if user does not select file, the browser also
         # submits an empty part without filename
         if filename == "":
-            raise BadRequest("No selected file.")
+            raise BadRequest("NoFile","No selected file.")
 
         # generate a dataset name from filename
         name = generate_name(filename)
@@ -184,8 +184,8 @@ def create_google_drive_dataset(gfile):
     except HttpError as e:
         reason = json.loads(e.content).get("error").get("errors")[0].get("message")
         if e.resp.status == 404:
-            raise NotFound("NotFound", reason)
-        raise BadRequest(reason)
+            raise NotFound("DriveNotFound", reason)
+        raise BadRequest("HttpError", reason)
 
 
 def get_dataset(name, page=1, page_size=10):
