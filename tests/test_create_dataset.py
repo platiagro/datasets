@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import io
-import copy
 import unittest
 import unittest.mock as mock
 
@@ -123,7 +122,8 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.IRIS_DATASET_NAME
 
@@ -236,23 +236,21 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.PREDICT_FILE
 
-        with util.PREDICT_FILE_HEADER as file:
-            data = copy.deepcopy(file.read())
-            rv = TEST_CLIENT.post(
-                "/datasets",
-                files={
-                    "file": (
-                        dataset_name,
-                        data,
-                        "multipart/form-data",
-                    )
-                },
-            )
-
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            files={
+                "file": (
+                    dataset_name,
+                    util.PREDICT_FILE_HEADER,
+                    "multipart/form-data",
+                )
+            },
+        )
         result = rv.json()
 
         expected = {
@@ -287,21 +285,21 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.PREDICT_HEADERLESS
-        with util.PREDICT_FILE_HEADERLESS as file:
-            data = copy.deepcopy(file.read())
-            rv = TEST_CLIENT.post(
-                "/datasets",
-                files={
-                    "file": (
-                        dataset_name,
-                        data,
-                        "multipart/form-data",
-                    )
-                },
-            )
+
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            files={
+                "file": (
+                    dataset_name,
+                    util.PREDICT_FILE_HEADERLESS,
+                    "multipart/form-data",
+                )
+            },
+        )
         result = rv.json()
 
         expected = {
