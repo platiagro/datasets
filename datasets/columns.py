@@ -3,8 +3,8 @@ from platiagro import load_dataset, save_dataset, stat_dataset
 from platiagro.featuretypes import validate_featuretypes
 from datasets.exceptions import BadRequest, NotFound
 
-COLUMN_NOT_FOUND = NotFound("The specified column does not exist")
-DATASET_NOT_FOUND = NotFound("The specified dataset does not exist")
+COLUMN_NOT_FOUND = NotFound("ColumnNotFound", "The specified column does not exist")
+DATASET_NOT_FOUND = NotFound("DatasetNotFound", "The specified dataset does not exist")
 
 
 def list_columns(dataset):
@@ -88,6 +88,6 @@ def update_column(dataset, column, featuretype):
     except FileNotFoundError:
         raise DATASET_NOT_FOUND
     except ValueError as e:
-        raise BadRequest(str(e))
+        raise BadRequest("ValueError", str(e))
 
     return {"name": column, "featuretype": featuretype}

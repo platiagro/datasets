@@ -34,7 +34,7 @@ def data_pagination(content, page, page_size):
         # fills with None values. Remove these values before returning
         paged_data = list(filter(None, split_into_pages[page-1]))
     except IndexError:
-        raise NotFound("The specified page does not exist")
+        raise NotFound("PageNotFound", "The specified page does not exist")
 
     return paged_data
 

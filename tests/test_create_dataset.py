@@ -122,7 +122,8 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.IRIS_DATASET_NAME
 
@@ -224,6 +225,31 @@ class TestCreateDataset(unittest.TestCase):
         self.assertEqual(result, expected)
         self.assertEqual(rv.status_code, 400)
 
+    def test_create_dataset_with_gfile_client_spread_sheet(self):
+        """
+        Should raise http status 400 client unauthorized when given clientId and clientSecret are invalid.
+        """
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            json={
+                "gfile": {
+                    "clientId": "clientId",
+                    "clientSecret": "clientSecret",
+                    "id": "id",
+                    "mimeType": "spreadsheet",
+                    "name": "iris.csv",
+                    "token": "123",
+                }
+            },
+        )
+        result = rv.json()
+
+        expected = {
+            "message": "Invalid token: client unauthorized",
+        }
+        self.assertEqual(result, expected)
+        self.assertEqual(rv.status_code, 400)
+
     @mock.patch(
         "datasets.datasets.stat_dataset",
         side_effect=util.FILE_NOT_FOUND_ERROR,
@@ -235,7 +261,8 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.PREDICT_FILE
 
@@ -283,7 +310,8 @@ class TestCreateDataset(unittest.TestCase):
         self, mock_save_dataset, mock_stat_dataset
     ):
         """
-        Should call platiagro.save_dataset using given file, filename, and metadata (columns, featurestypes, total, original-filename).
+        Should call platiagro.save_dataset using given:
+        file, filename, and metadata (columns, featurestypes, total, original-filename).
         """
         dataset_name = util.PREDICT_HEADERLESS
 
@@ -319,3 +347,25 @@ class TestCreateDataset(unittest.TestCase):
                 "total": len(util.PREDICT_FILE_DATA),
             },
         )
+
+    @mock.patch(
+        "datasets.datasets.stat_dataset",
+        side_effect=util.FILE_NOT_FOUND_ERROR,
+    )
+    @mock.patch(
+        "datasets.datasets.save_dataset",
+    )
+    def test_create_foul_dataset(
+        self, mock_save_dataset, mock_stat_dataset
+    ):
+        rv = TEST_CLIENT.post(
+            "/datasets",
+            files={
+                "file": (
+                    "",
+                    "",
+                    "multipart/form-data",
+                )
+            },
+        )
+        self.assertEqual(rv.status_code, 500)
