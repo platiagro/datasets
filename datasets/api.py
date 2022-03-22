@@ -99,7 +99,6 @@ async def handle_post_datasets(
                 # let's wait 1 sec before tryng again!
                 time.sleep(1)
                 retries = retries + 1
-                print(retries)
 
         raise InternalServerError("FileUploadError", "Not able to handle file upload")
 
@@ -115,7 +114,7 @@ async def handle_post_datasets(
         raise BadRequest("NoFile", "No file part.")
 
 
-@ app.get("/datasets/{name}")
+@app.get("/datasets/{name}")
 async def handle_get_dataset(name: str, page: int = 1, page_size: int = 10):
     """
     Handles GET requests to /datasets/{name}.
@@ -132,7 +131,7 @@ async def handle_get_dataset(name: str, page: int = 1, page_size: int = 10):
     return get_dataset(name, page, page_size)
 
 
-@ app.patch("/datasets/{name}")
+@app.patch("/datasets/{name}")
 async def handle_patch_dataset(name: str, featuretypes: UploadFile = File(...)):
     """
     Handles PATCH requests to /datasets/{name}.
@@ -149,7 +148,7 @@ async def handle_patch_dataset(name: str, featuretypes: UploadFile = File(...)):
     return patch_dataset(name, featuretypes)
 
 
-@ app.get("/datasets/{dataset}/columns")
+@app.get("/datasets/{dataset}/columns")
 async def handle_list_columns(dataset: str):
     """
     Handles GET requests to /datasets/{dataset}/columns.
@@ -166,7 +165,7 @@ async def handle_list_columns(dataset: str):
     return list_columns(dataset)
 
 
-@ app.patch("/datasets/{dataset}/columns/{column}")
+@app.patch("/datasets/{dataset}/columns/{column}")
 async def handle_patch_column(dataset: str, column: str, request: Request):
     """
     Handles PATCH requests to /datasets/{dataset}/columns/{column}.
@@ -187,7 +186,7 @@ async def handle_patch_column(dataset: str, column: str, request: Request):
     return update_column(dataset, column, featuretype)
 
 
-@ app.get("/datasets/{dataset}/featuretypes")
+@app.get("/datasets/{dataset}/featuretypes")
 async def handle_get_featuretypes(dataset: str):
     """
     Handles GET requests to "/datasets/{dataset}/featuretypes.
@@ -208,7 +207,7 @@ async def handle_get_featuretypes(dataset: str):
     return Response(content=featuretypes, headers=headers)
 
 
-@ app.get("/datasets/{name}/downloads", response_class=StreamingResponse)
+@app.get("/datasets/{name}/downloads", response_class=StreamingResponse)
 async def handle_download_dataset(name: str):
     """
     Handles GET requests to "/datasets/{dataset}/downloads.
@@ -226,9 +225,9 @@ async def handle_download_dataset(name: str):
     return streaming_response
 
 
-@ app.exception_handler(BadRequest)
-@ app.exception_handler(NotFound)
-@ app.exception_handler(InternalServerError)
+@app.exception_handler(BadRequest)
+@app.exception_handler(NotFound)
+@app.exception_handler(InternalServerError)
 async def handle_errors(request: Request, exception: Exception):
     """
     Handles exceptions raised by the API.
@@ -252,7 +251,7 @@ def enable_cors():
     Enables CORS preflight requests.
     """
 
-    @ app.options("/{rest_of_path:path}")
+    @app.options("/{rest_of_path:path}")
     async def preflight_handler(request: Request, rest_of_path: str) -> Response:
         """
         Handles CORS preflight requests.
@@ -265,7 +264,7 @@ def enable_cors():
         response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         return response
 
-    @ app.middleware("http")
+    @app.middleware("http")
     async def add_cors_header(request: Request, call_next):
         """
         Sets CORS headers.
