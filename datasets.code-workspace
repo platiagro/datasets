@@ -23,6 +23,9 @@
 			"python.formatting.provider": "black",
 			"[python]": {
 					"editor.defaultFormatter": "ms-python.python"
+			},
+			"[markdown]": {
+				"editor.defaultFormatter": "esbenp.prettier-vscode"
 			}
 	},
 	"extensions": {

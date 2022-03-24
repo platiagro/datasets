@@ -6,6 +6,8 @@ import os
 import sys
 import time
 from typing import Optional
+from pydantic import ValidationError
+
 
 import uvicorn
 from fastapi import FastAPI, File, Request, UploadFile
@@ -28,6 +30,7 @@ from datasets.datasets import (
     patch_dataset,
 )
 from datasets.exceptions import BadRequest, InternalServerError, NotFound
+from datasets.schemas import FileUploadValidate
 from datasets.utils import to_snake_case
 
 app = FastAPI(
@@ -78,6 +81,11 @@ async def handle_post_datasets(
     -------
     str
     """
+
+    FileUploadValidate(file=file)
+
+    MAX_RETRIES = 1
+
     retries = 0
     if file:
         while retries < MAX_RETRIES:

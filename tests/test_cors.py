@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-
-os.environ["ENABLE_CORS"] = "1"
 import unittest
-
 from fastapi.testclient import TestClient
 
 from datasets.api import app
+
+os.environ["ENABLE_CORS"] = "1"
+
 
 TEST_CLIENT = TestClient(app)
 
