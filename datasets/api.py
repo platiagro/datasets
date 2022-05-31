@@ -84,7 +84,6 @@ async def handle_post_datasets(
 
     FileUploadValidate(file=file)
 
-    MAX_RETRIES = 1
 
     retries = 0
     if file:
